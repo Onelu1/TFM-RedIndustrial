@@ -53,242 +53,196 @@ def build_openplc_image_if_needed():
 
 import json
 
-def generate_nodered_flow(num_plcs_modbus=1, base_ip="192.168.10.10"):
+def generate_nodered_flow(num_modbus_a=0, num_s7_b=0):
     flow = []
     
-    # 1. Tab Principal
+    # 1. Tab Principal y Nodo Debug General
     tab_id = "tab_supervision_purdue"
-    flow.append({
-        "id": tab_id,
-        "type": "tab",
-        "label": "Supervisión OT Multi-Protocolo (Purdue)",
-        "disabled": False
-    })
-
-    # 2. Nodo Debug General (Recibe los datos de todos los PLCs)
     debug_id = "debug_telemetria_general"
-    flow.append({
-        "id": debug_id,
-        "type": "debug",
-        "z": tab_id,
-        "name": "Telemetría SCADA",
-        "active": True,
-        "tosidebar": True,
-        "complete": "payload",
-        "x": 850,
-        "y": 80,
-        "wires": []
-    })
+    
+    flow.extend([
+        {
+            "id": tab_id,
+            "type": "tab",
+            "label": "Supervisión OT Multi-Protocolo (Purdue)",
+            "disabled": False
+        },
+        {
+            "id": debug_id,
+            "type": "debug",
+            "z": tab_id,
+            "name": "Telemetría SCADA",
+            "active": True,
+            "tosidebar": True,
+            "complete": "payload",
+            "x": 850,
+            "y": 80,
+            "wires": []
+        }
+    ])
 
-    # 3. Generación dinámica para cada PLC Modbus
-    for i in range(1, num_plcs_modbus + 1):
+    # ---------------------------------------------------------
+    # 2. GENERACIÓN DINÁMICA: ZONA OT A (MODBUS TCP)
+    # ---------------------------------------------------------
+    for i in range(1, num_modbus_a + 1):
         client_id = f"client_modbus_{i}"
-        ip_addr = f"192.168.10.{9 + i}"  # Cada cliente Modbus asignado a la IP fija del PLC correspondiente
-        
-        # Coordenada vertical para cada bloque para que queden correctamente espaciados
+        ip_addr = f"192.168.10.{9 + i}"
         y_base = (i - 1) * 500
 
-        # Cliente Modbus TCP con todas sus propiedades
+        # Cliente Modbus TCP Completo
         flow.append({
             "id": client_id,
             "type": "modbus-client",
-            "name": f"PLC_Modbus_Agua_{i}",
+            "name": f"PLC_Agua_{i}",
             "clienttype": "tcp",
-            "bufferCommands": True,
-            "stateLogEnabled": False,
-            "queueLogEnabled": False,
-            "failureLogEnabled": True,
             "tcpHost": ip_addr,
             "tcpPort": "502",
             "tcpType": "DEFAULT",
-            "serialPort": "/dev/ttyUSB",
-            "serialType": "RTU-BUFFERD",
-            "serialBaudrate": "9600",
-            "serialDatabits": "8",
-            "serialStopbits": "1",
-            "serialParity": "none",
-            "serialConnectionDelay": "100",
-            "serialAsciiResponseStartDelimiter": "0x3A",
+            "listenType": "multiple",
             "unit_id": "1",
-            "commandDelay": "1",
             "clientTimeout": "2000",
             "reconnectOnTimeout": True,
             "reconnectTimeout": "2000",
-            "parallelUnitIdsAllowed": True,
-            "showErrors": False,
+            "parallelUnitIdsAllowed": False,
+            "showServerAddress": False,
             "showWarnings": True,
-            "showLogs": True
+            "showErrors": True,
+            "enableMsgQueue": True,
+            "showLogQueue": False,
+            "queueLogParallelQueues": 1,
+            "bufferCommands": True,
+            "stateLogEnabled": False,
+            "queueLogEnabled": False,
+            "logIOActivities": False
         })
 
-        # Lectura Holding Registers (0-19) cada 2 s.
-        read_id = f"read_modbus_{i}"
+        # Lectura Modbus (Holding Registers 0..19)
         flow.append({
-            "id": read_id,
+            "id": f"read_modbus_{i}",
             "type": "modbus-read",
             "z": tab_id,
-            "name": f"Leer Modbus Agua {i}",
+            "name": f"Leer Sensores Modbus {i}",
             "topic": "",
             "showStatusActivities": False,
             "logIOActivities": False,
             "showErrors": False,
             "showWarnings": True,
-            "unitid": "1",
+            "unitid": "",
             "dataType": "HoldingRegister",
             "adr": "0",
             "quantity": "20",
             "rate": "2",
             "rateUnit": "s",
             "delayOnStart": False,
-            "startDelayTime": "",
+            "startDelayQty": "",
             "server": client_id,
             "useIOFile": False,
             "ioFile": "",
             "useIOForPayload": False,
             "emptyMsgOnFail": False,
+            "keepMsgProperties": False,
             "x": 250,
             "y": y_base + 80,
             "wires": [[debug_id], []]
         })
 
-        # Controles de Escritura (FC05 y FC06) por PLC
-        
-        # Parada de Emergencia (Coil 0). Por cada PLC, dos nodos inject (Activar/Desactivar) y un nodo modbus_write
-        write_emerg_id = f"write_emerg_{i}"
+        # Controles Modbus (Inyectores + Modbus Write)
         flow.extend([
-            {
-                "id": f"inj_emerg_on_{i}",
-                "type": "inject",
-                "z": tab_id,
-                "name": f"Activar Parada PLC {i}",
-                "props": [{"p": "payload"}],
-                "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1,
-                "topic": "", "payload": "true", "payloadType": "bool",
-                "x": 230, "y": y_base + 160,
-                "wires": [[write_emerg_id]]
-            },
-            {
-                "id": f"inj_emerg_off_{i}",
-                "type": "inject",
-                "z": tab_id,
-                "name": f"Desactivar Parada PLC {i}",
-                "props": [{"p": "payload"}],
-                "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1,
-                "topic": "", "payload": "false", "payloadType": "bool",
-                "x": 250, "y": y_base + 210,
-                "wires": [[write_emerg_id]]
-            },
-            {
-                "id": write_emerg_id,
-                "type": "modbus-write",
-                "z": tab_id,
-                "name": f"Modbus-write-parada PLC {i}",
-                "showStatusActivities": False, "showErrors": False, "showWarnings": True,
-                "unitid": "1", "dataType": "Coil", "adr": "0", "quantity": "1",
-                "server": client_id, "emptyMsgOnFail": False, "keepMsgProperties": False,
-                "delayOnStart": False, "startDelayTime": "",
-                "x": 600, "y": y_base + 185,
-                "wires": [[], []]
-            }
+            # Control Parada de Emergencia (Coil 0)
+            {"id": f"inj_em_on_{i}", "type": "inject", "z": tab_id, "name": f"Activar Parada MB {i}", "payload": "true", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 230, "y": y_base + 160, "wires": [[f"wr_em_{i}"]]},
+            {"id": f"inj_em_off_{i}", "type": "inject", "z": tab_id, "name": f"Desactivar Parada MB {i}", "payload": "false", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 250, "y": y_base + 210, "wires": [[f"wr_em_{i}"]]},
+            {"id": f"wr_em_{i}", "type": "modbus-write", "z": tab_id, "name": f"Escribir Parada MB {i}", "showStatusActivities": False, "showErrors": False, "showWarnings": True, "unitid": "", "dataType": "Coil", "adr": "0", "server": client_id, "emptyMsgOnFail": False, "keepMsgProperties": False, "delayOnStart": False, "startDelayQty": "", "x": 600, "y": y_base + 185, "wires": [[], []]},
+            
+            # Control Bomba (Coil 1)
+            {"id": f"inj_pmp_on_{i}", "type": "inject", "z": tab_id, "name": f"Encender Bomba MB {i}", "payload": "true", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 170, "y": y_base + 280, "wires": [[f"wr_pmp_{i}"]]},
+            {"id": f"inj_pmp_off_{i}", "type": "inject", "z": tab_id, "name": f"Apagar Bomba MB {i}", "payload": "false", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 160, "y": y_base + 330, "wires": [[f"wr_pmp_{i}"]]},
+            {"id": f"wr_pmp_{i}", "type": "modbus-write", "z": tab_id, "name": f"Escribir Bomba MB {i}", "showStatusActivities": False, "showErrors": False, "showWarnings": True, "unitid": "", "dataType": "Coil", "adr": "1", "server": client_id, "emptyMsgOnFail": False, "keepMsgProperties": False, "delayOnStart": False, "startDelayQty": "", "x": 600, "y": y_base + 305, "wires": [[], []]},
+            
+            # Control RPM (Holding Register 20)
+            {"id": f"inj_rpm_800_{i}", "type": "inject", "z": tab_id, "name": f"Limitar RPM 800 MB {i}", "payload": "800", "payloadType": "num", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 140, "y": y_base + 400, "wires": [[f"wr_rpm_{i}"]]},
+            {"id": f"inj_rpm_1500_{i}", "type": "inject", "z": tab_id, "name": f"Restablecer RPM 1500 MB {i}", "payload": "1500", "payloadType": "num", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 150, "y": y_base + 450, "wires": [[f"wr_rpm_{i}"]]},
+            {"id": f"wr_rpm_{i}", "type": "modbus-write", "z": tab_id, "name": f"Escribir RPM MB {i}", "showStatusActivities": False, "showErrors": False, "showWarnings": True, "unitid": "", "dataType": "HoldingRegister", "adr": "20", "server": client_id, "emptyMsgOnFail": False, "keepMsgProperties": False, "delayOnStart": False, "startDelayQty": "", "x": 600, "y": y_base + 425, "wires": [[], []]}
         ])
 
-        # Control Marcha Bomba 1 (Coil 1)
-        write_pump_id = f"write_pump_{i}"
+    # ---------------------------------------------------------
+    # 3. GENERACIÓN DINÁMICA: ZONA OT B (SIEMENS S7)
+    # ---------------------------------------------------------
+    offset_y_s7 = num_modbus_a * 500  # Empieza debajo del último Modbus
+
+    for i in range(1, num_s7_b + 1):
+        endpoint_id = f"s7_endpoint_{i}"
+        ip_addr = f"192.168.30.{9 + i}"
+        y_base = offset_y_s7 + ((i - 1) * 500)
+
+        # Configuración del S7 Endpoint (con las variables del DB1)
+        flow.append({
+            "id": endpoint_id, 
+            "type": "s7 endpoint", 
+            "transport": "iso-on-tcp",
+            "address": ip_addr, 
+            "port": "102", 
+            "rack": "0", 
+            "slot": "1",
+            "localtsaphi": "01",
+            "localtsaplo": "00",
+            "remotetsaphi": "01",
+            "remotetsaplo": "00",
+            "connmode": "rack-slot",
+            "adapter": "",
+            "busaddr": 2,
+            "cycletime": 1000,
+            "timeout": 2000,
+            "name": "",
+            "vartable": [
+                {"addr": "DB1,INT0", "name": "Temp"},
+                {"addr": "DB1,INT2", "name": "Presion"},
+                {"addr": "DB1,X4.0", "name": "Marcha"},
+                {"addr": "DB1,X4.1", "name": "Parada"},
+                {"addr": "DB1,REAL6", "name": "Setpoint"}
+            ]
+        })
+
+        # Nodo de Lectura S7 (Lee Temp para enviar a Telemetría)
+        flow.append({
+            "id": f"read_s7_{i}", "type": "s7 in", "z": tab_id,
+            "endpoint": endpoint_id, "mode": "single", "variable": "Temp", "diff": True,
+            "name": f"Leer Temp S7 {i}", "x": 150, "y": y_base + 80, "wires": [[debug_id]]
+        })
+
+        # Controles S7 (Marcha, Parada, Setpoint)
         flow.extend([
-            {
-                "id": f"inj_pump_on_{i}",
-                "type": "inject",
-                "z": tab_id,
-                "name": f"Encender Bomba 1 PLC {i}",
-                "props": [{"p": "payload"}],
-                "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1,
-                "topic": "", "payload": "true", "payloadType": "bool",
-                "x": 170, "y": y_base + 280,
-                "wires": [[write_pump_id]]
-            },
-            {
-                "id": f"inj_pump_off_{i}",
-                "type": "inject",
-                "z": tab_id,
-                "name": f"Apagar Bomba 1 PLC {i}",
-                "props": [{"p": "payload"}],
-                "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1,
-                "topic": "", "payload": "false", "payloadType": "bool",
-                "x": 160, "y": y_base + 330,
-                "wires": [[write_pump_id]]
-            },
-            {
-                "id": write_pump_id,
-                "type": "modbus-write",
-                "z": tab_id,
-                "name": f"Modbus-write-bomba1 PLC {i}",
-                "showStatusActivities": False, "showErrors": False, "showWarnings": True,
-                "unitid": "1", "dataType": "Coil", "adr": "1", "quantity": "1",
-                "server": client_id, "emptyMsgOnFail": False, "keepMsgProperties": False,
-                "delayOnStart": False, "startDelayTime": "",
-                "x": 600, "y": y_base + 305,
-                "wires": [[], []]
-            }
+            # Control Marcha
+            {"id": f"inj_s7_run_{i}", "type": "inject", "z": tab_id, "name": f"Activar Marcha S7 {i}", "payload": "true", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 190, "y": y_base + 160, "wires": [[f"out_s7_run_{i}"]]},
+            {"id": f"inj_s7_stop_{i}", "type": "inject", "z": tab_id, "name": f"Desactivar Marcha S7 {i}", "payload": "false", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 200, "y": y_base + 210, "wires": [[f"out_s7_run_{i}"]]},
+            {"id": f"out_s7_run_{i}", "type": "s7 out", "z": tab_id, "endpoint": endpoint_id, "variable": "Marcha", "name": f"Escribir Marcha {i}", "x": 460, "y": y_base + 185, "wires": []},
+            
+            # Control Setpoint
+            {"id": f"inj_s7_sp_{i}", "type": "inject", "z": tab_id, "name": f"Setpoint 50Hz S7 {i}", "payload": "50", "payloadType": "num", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 170, "y": y_base + 280, "wires": [[f"out_s7_sp_{i}"]]},
+            {"id": f"out_s7_sp_{i}", "type": "s7 out", "z": tab_id, "endpoint": endpoint_id, "variable": "Setpoint", "name": f"Escribir Setpoint {i}", "x": 420, "y": y_base + 280, "wires": []},
+
+            # Control Parada
+            {"id": f"inj_s7_em_on_{i}", "type": "inject", "z": tab_id, "name": f"Activar Parada S7 {i}", "payload": "true", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 210, "y": y_base + 360, "wires": [[f"out_s7_em_{i}"]]},
+            {"id": f"inj_s7_em_off_{i}", "type": "inject", "z": tab_id, "name": f"Desactivar Parada S7 {i}", "payload": "false", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 230, "y": y_base + 410, "wires": [[f"out_s7_em_{i}"]]},
+            {"id": f"out_s7_em_{i}", "type": "s7 out", "z": tab_id, "endpoint": endpoint_id, "variable": "Parada", "name": f"Escribir Parada {i}", "x": 440, "y": y_base + 385, "wires": []}
         ])
 
-        # Limitacion Max RPM (Holding Register 20)
-        write_rpm_id = f"write_rpm_{i}"
-        flow.extend([
-            {
-                "id": f"inj_rpm_limit_{i}",
-                "type": "inject",
-                "z": tab_id,
-                "name": f"Limitación RPM 800 PLC {i}",
-                "props": [{"p": "payload"}],
-                "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1,
-                "topic": "", "payload": "800", "payloadType": "num",
-                "x": 140, "y": y_base + 400,
-                "wires": [[write_rpm_id]]
-            },
-            {
-                "id": f"inj_rpm_reset_{i}",
-                "type": "inject",
-                "z": tab_id,
-                "name": f"Restablecer RPM 1500 PLC {i}",
-                "props": [{"p": "payload"}],
-                "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1,
-                "topic": "", "payload": "1500", "payloadType": "num",
-                "x": 150, "y": y_base + 450,
-                "wires": [[write_rpm_id]]
-            },
-            {
-                "id": write_rpm_id,
-                "type": "modbus-write",
-                "z": tab_id,
-                "name": f"Modbus-write-rpm PLC {i}",
-                "showStatusActivities": False, "showErrors": False, "showWarnings": True,
-                "unitid": "1", "dataType": "HoldingRegister", "adr": "20", "quantity": "1",
-                "server": client_id, "emptyMsgOnFail": False, "keepMsgProperties": False,
-                "delayOnStart": False, "startDelayTime": "",
-                "x": 600, "y": y_base + 425,
-                "wires": [[], []]
-            }
-        ])
-
-    # Configuración Global Modbus
+    # 4. Configuración Global (Módulos de ambos protocolos)
     flow.append({
-        "id": "global_modbus_config",
-        "type": "global-config",
-        "env": [],
+        "id": "global_config_modules", "type": "global-config", "env": [],
         "modules": {
-            "node-red-contrib-modbus": "5.60.2"
+            "node-red-contrib-modbus": "5.60.2",
+            "node-red-contrib-s7": "3.1.3"
         }
     })
 
     return flow
 
-
-def save_flows_file(filepath="nodered_data_scada_1/flows.json", num_plcs=3):
-    """Crea el directorio ./nodered_data_scada_1/ y genera el JSON que lee Node-RED en el arranque"""
+def save_flows_file(filepath="nodered_data_scada_1/flows.json", num_modbus_a=0, num_s7_b=0):
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
-    flows = generate_nodered_flow(num_plcs_modbus=num_plcs)
+    flows = generate_nodered_flow(num_modbus_a, num_s7_b)
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(flows, f, indent=4)
-    print(f"[+] Flujos creados correctamente para {num_plcs} PLC(s) en '{filepath}'.")
+    print(f"[+] Flujos creados: {num_modbus_a} PLC(s) Modbus y {num_s7_b} PLC(s) Siemens en '{filepath}'.")
 
 def generate_docker_compose(num_modbus_a, num_s7_b, incluir_kali=True):
     """Genera la arquitectura de red segmentada en docker-compose.generated.yml."""
@@ -462,19 +416,23 @@ def main_menu():
         
         if opt == "1":
             n_s7 = int(input("Número de PLCs Siemens S7: "))
+            save_flows_file("nodered_data_scada_1/flows.json", num_modbus_a=0, num_s7_b=n_s7)
             deploy_scenario(0, n_s7)
             input("\nPresiona ENTER para continuar...")
+            
         elif opt == "2":
             n_mb = int(input("Número de PLCs Modbus TCP: "))
-            save_flows_file("nodered_data_scada_1/flows.json", num_plcs=n_mb)
+            save_flows_file("nodered_data_scada_1/flows.json", num_modbus_a=n_mb, num_s7_b=0)
             deploy_scenario(n_mb, 0)
             input("\nPresiona ENTER para continuar...")
+            
         elif opt == "3":
             n_mb = int(input("Número de PLCs Modbus TCP (Zona A): "))
             n_s7 = int(input("Número de PLCs Siemens S7 (Zona B): "))
-            save_flows_file("nodered_data_scada_1/flows.json", num_plcs=n_mb)
+            save_flows_file("nodered_data_scada_1/flows.json", num_modbus_a=n_mb, num_s7_b=n_s7)
             deploy_scenario(n_mb, n_s7)
             input("\nPresiona ENTER para continuar...")
+            
         elif opt == "4":
             clean_environment()
             input("\nPresiona ENTER para continuar...")
