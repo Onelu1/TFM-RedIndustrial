@@ -1,0 +1,12 @@
+# Cache y temporales de Python
+__pycache__/
+*.pyc
+
+# Archivos y datos generados dinámicamente
+docker-compose.generated.yml
+nodered_data*/
+
+# Archivos de entorno y editores
+.env
+.vscode/
+.idea/
