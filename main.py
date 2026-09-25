@@ -89,20 +89,21 @@ def generate_nodered_flow(num_modbus_a=0, num_s7_b=0):
         ip_addr = f"192.168.10.{9 + i}"
         y_base = (i - 1) * 500
 
-        # Cliente Modbus TCP Completo
+        # Cliente Modbus TCP Completo (con tipos numéricos estrictos)
         flow.append({
             "id": client_id,
             "type": "modbus-client",
             "name": f"PLC_Agua_{i}",
             "clienttype": "tcp",
             "tcpHost": ip_addr,
-            "tcpPort": "502",
+            "tcpPort": 502,
             "tcpType": "DEFAULT",
             "listenType": "multiple",
-            "unit_id": "1",
-            "clientTimeout": "2000",
+            "unit_id": 1,
+            "commandDelay": 1,
+            "clientTimeout": 2000,
             "reconnectOnTimeout": True,
-            "reconnectTimeout": "2000",
+            "reconnectTimeout": 2000,
             "parallelUnitIdsAllowed": False,
             "showServerAddress": False,
             "showWarnings": True,
@@ -113,10 +114,18 @@ def generate_nodered_flow(num_modbus_a=0, num_s7_b=0):
             "bufferCommands": True,
             "stateLogEnabled": False,
             "queueLogEnabled": False,
-            "logIOActivities": False
+            "failureLogEnabled": True,
+            "logIOActivities": False,
+            "serialPort": "/dev/ttyUSB0",
+            "serialBaudrate": 9600,
+            "serialDatabits": 8,
+            "serialStopbits": 1,
+            "serialParity": "none",
+            "serialType": "RTU",
+            "serialConnectionDelay": 100
         })
 
-        # Lectura Modbus (Holding Registers 0..19)
+        # Lectura Modbus
         flow.append({
             "id": f"read_modbus_{i}",
             "type": "modbus-read",
@@ -129,12 +138,12 @@ def generate_nodered_flow(num_modbus_a=0, num_s7_b=0):
             "showWarnings": True,
             "unitid": "",
             "dataType": "HoldingRegister",
-            "adr": "0",
-            "quantity": "20",
-            "rate": "2",
+            "adr": 0,
+            "quantity": 20,
+            "rate": 2,
             "rateUnit": "s",
             "delayOnStart": False,
-            "startDelayQty": "",
+            "startDelayQty": 0,
             "server": client_id,
             "useIOFile": False,
             "ioFile": "",
@@ -151,30 +160,29 @@ def generate_nodered_flow(num_modbus_a=0, num_s7_b=0):
             # Control Parada de Emergencia (Coil 0)
             {"id": f"inj_em_on_{i}", "type": "inject", "z": tab_id, "name": f"Activar Parada MB {i}", "payload": "true", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 230, "y": y_base + 160, "wires": [[f"wr_em_{i}"]]},
             {"id": f"inj_em_off_{i}", "type": "inject", "z": tab_id, "name": f"Desactivar Parada MB {i}", "payload": "false", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 250, "y": y_base + 210, "wires": [[f"wr_em_{i}"]]},
-            {"id": f"wr_em_{i}", "type": "modbus-write", "z": tab_id, "name": f"Escribir Parada MB {i}", "showStatusActivities": False, "showErrors": False, "showWarnings": True, "unitid": "", "dataType": "Coil", "adr": "0", "server": client_id, "emptyMsgOnFail": False, "keepMsgProperties": False, "delayOnStart": False, "startDelayQty": "", "x": 600, "y": y_base + 185, "wires": [[], []]},
+            {"id": f"wr_em_{i}", "type": "modbus-write", "z": tab_id, "name": f"Escribir Parada MB {i}", "showStatusActivities": False, "showErrors": False, "showWarnings": True, "unitid": 1, "dataType": "Coil", "adr": 0, "quantity": 1, "server": client_id, "emptyMsgOnFail": False, "keepMsgProperties": False, "delayOnStart": False, "startDelayQty": 0, "x": 600, "y": y_base + 185, "wires": [[], []]},
             
             # Control Bomba (Coil 1)
             {"id": f"inj_pmp_on_{i}", "type": "inject", "z": tab_id, "name": f"Encender Bomba MB {i}", "payload": "true", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 170, "y": y_base + 280, "wires": [[f"wr_pmp_{i}"]]},
             {"id": f"inj_pmp_off_{i}", "type": "inject", "z": tab_id, "name": f"Apagar Bomba MB {i}", "payload": "false", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 160, "y": y_base + 330, "wires": [[f"wr_pmp_{i}"]]},
-            {"id": f"wr_pmp_{i}", "type": "modbus-write", "z": tab_id, "name": f"Escribir Bomba MB {i}", "showStatusActivities": False, "showErrors": False, "showWarnings": True, "unitid": "", "dataType": "Coil", "adr": "1", "server": client_id, "emptyMsgOnFail": False, "keepMsgProperties": False, "delayOnStart": False, "startDelayQty": "", "x": 600, "y": y_base + 305, "wires": [[], []]},
+            {"id": f"wr_pmp_{i}", "type": "modbus-write", "z": tab_id, "name": f"Escribir Bomba MB {i}", "showStatusActivities": False, "showErrors": False, "showWarnings": True, "unitid": 1, "dataType": "Coil", "adr": 1, "quantity": 1, "server": client_id, "emptyMsgOnFail": False, "keepMsgProperties": False, "delayOnStart": False, "startDelayQty": 0, "x": 600, "y": y_base + 305, "wires": [[], []]},
             
             # Control RPM (Holding Register 20)
             {"id": f"inj_rpm_800_{i}", "type": "inject", "z": tab_id, "name": f"Limitar RPM 800 MB {i}", "payload": "800", "payloadType": "num", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 140, "y": y_base + 400, "wires": [[f"wr_rpm_{i}"]]},
             {"id": f"inj_rpm_1500_{i}", "type": "inject", "z": tab_id, "name": f"Restablecer RPM 1500 MB {i}", "payload": "1500", "payloadType": "num", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 150, "y": y_base + 450, "wires": [[f"wr_rpm_{i}"]]},
-            {"id": f"wr_rpm_{i}", "type": "modbus-write", "z": tab_id, "name": f"Escribir RPM MB {i}", "showStatusActivities": False, "showErrors": False, "showWarnings": True, "unitid": "", "dataType": "HoldingRegister", "adr": "20", "server": client_id, "emptyMsgOnFail": False, "keepMsgProperties": False, "delayOnStart": False, "startDelayQty": "", "x": 600, "y": y_base + 425, "wires": [[], []]}
+            {"id": f"wr_rpm_{i}", "type": "modbus-write", "z": tab_id, "name": f"Escribir RPM MB {i}", "showStatusActivities": False, "showErrors": False, "showWarnings": True, "unitid": 1, "dataType": "HoldingRegister", "adr": 20, "quantity": 1, "server": client_id, "emptyMsgOnFail": False, "keepMsgProperties": False, "delayOnStart": False, "startDelayQty": 0, "x": 600, "y": y_base + 425, "wires": [[], []]}
         ])
 
     # ---------------------------------------------------------
     # 3. GENERACIÓN DINÁMICA: ZONA OT B (SIEMENS S7)
     # ---------------------------------------------------------
-    offset_y_s7 = num_modbus_a * 500  # Empieza debajo del último Modbus
+    offset_y_s7 = num_modbus_a * 500
 
     for i in range(1, num_s7_b + 1):
         endpoint_id = f"s7_endpoint_{i}"
         ip_addr = f"192.168.30.{9 + i}"
         y_base = offset_y_s7 + ((i - 1) * 500)
 
-        # Configuración del S7 Endpoint (con las variables del DB1)
         flow.append({
             "id": endpoint_id, 
             "type": "s7 endpoint", 
@@ -202,31 +210,26 @@ def generate_nodered_flow(num_modbus_a=0, num_s7_b=0):
             ]
         })
 
-        # Nodo de Lectura S7 (Lee Temp para enviar a Telemetría)
         flow.append({
             "id": f"read_s7_{i}", "type": "s7 in", "z": tab_id,
             "endpoint": endpoint_id, "mode": "single", "variable": "Temp", "diff": True,
             "name": f"Leer Temp S7 {i}", "x": 150, "y": y_base + 80, "wires": [[debug_id]]
         })
 
-        # Controles S7 (Marcha, Parada, Setpoint)
         flow.extend([
-            # Control Marcha
             {"id": f"inj_s7_run_{i}", "type": "inject", "z": tab_id, "name": f"Activar Marcha S7 {i}", "payload": "true", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 190, "y": y_base + 160, "wires": [[f"out_s7_run_{i}"]]},
             {"id": f"inj_s7_stop_{i}", "type": "inject", "z": tab_id, "name": f"Desactivar Marcha S7 {i}", "payload": "false", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 200, "y": y_base + 210, "wires": [[f"out_s7_run_{i}"]]},
             {"id": f"out_s7_run_{i}", "type": "s7 out", "z": tab_id, "endpoint": endpoint_id, "variable": "Marcha", "name": f"Escribir Marcha {i}", "x": 460, "y": y_base + 185, "wires": []},
             
-            # Control Setpoint
             {"id": f"inj_s7_sp_{i}", "type": "inject", "z": tab_id, "name": f"Setpoint 50Hz S7 {i}", "payload": "50", "payloadType": "num", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 170, "y": y_base + 280, "wires": [[f"out_s7_sp_{i}"]]},
             {"id": f"out_s7_sp_{i}", "type": "s7 out", "z": tab_id, "endpoint": endpoint_id, "variable": "Setpoint", "name": f"Escribir Setpoint {i}", "x": 420, "y": y_base + 280, "wires": []},
 
-            # Control Parada
             {"id": f"inj_s7_em_on_{i}", "type": "inject", "z": tab_id, "name": f"Activar Parada S7 {i}", "payload": "true", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 210, "y": y_base + 360, "wires": [[f"out_s7_em_{i}"]]},
             {"id": f"inj_s7_em_off_{i}", "type": "inject", "z": tab_id, "name": f"Desactivar Parada S7 {i}", "payload": "false", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 230, "y": y_base + 410, "wires": [[f"out_s7_em_{i}"]]},
             {"id": f"out_s7_em_{i}", "type": "s7 out", "z": tab_id, "endpoint": endpoint_id, "variable": "Parada", "name": f"Escribir Parada {i}", "x": 440, "y": y_base + 385, "wires": []}
         ])
 
-    # 4. Configuración Global (Módulos de ambos protocolos)
+    # 4. Configuración Global
     flow.append({
         "id": "global_config_modules", "type": "global-config", "env": [],
         "modules": {
@@ -327,7 +330,7 @@ services:
     restart: always
 """
 
-    # PLCs Siemens S7 (Zona OT B)
+# PLCs Siemens S7 (Zona OT B)
     for i in range(1, num_s7_b + 1):
         compose_content += f"""
   plc_s7_{i}:
