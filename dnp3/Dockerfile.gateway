@@ -1,0 +1,14 @@
+FROM python:3.10-slim
+
+# Evita que Python guarde la salida en buffer dentro de Docker
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir paho-mqtt dnp3-python
+
+COPY gateway_dnp3.py .
+
+# Añadimos -u para forzar stdout sin buffer
+CMD ["python", "-u", "gateway_dnp3.py"]
