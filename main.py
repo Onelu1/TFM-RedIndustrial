@@ -2,7 +2,7 @@
 """
 Orquestador CLI de Testbed OT/ICS (TFM)
 Modelado de red segmentada según el Modelo Purdue (ISA-95).
-Soporta Siemens S7, Modbus TCP y auto-configuración de SCADA Node-RED.
+Soporta Siemens S7, Modbus TCP, DNP3-MQTT y auto-configuración de SCADA Node-RED.
 """
 
 import os
@@ -15,7 +15,8 @@ def run_cmd(cmd, check=True, capture=True):
     """Ejecuta comandos del sistema con captura de errores."""
     try:
         res = subprocess.run(
-            cmd, shell=True, check=check, text=True,
+            cmd, shell=True, check=check, text=True, 
+            encoding="utf-8", errors="replace",
             stdout=subprocess.PIPE if capture else None,
             stderr=subprocess.PIPE if capture else None
         )
@@ -25,6 +26,7 @@ def run_cmd(cmd, check=True, capture=True):
             print(f"[!] Error ejecutando el comando: {cmd}\n[!] {e.stderr.strip()}")
         return None
 
+    
 def build_s7_image_if_needed():
     """Compila la imagen Docker de Siemens S7 si no existe."""
     image = run_cmd("docker images -q mi_plc_siemens")
@@ -51,9 +53,7 @@ def build_openplc_image_if_needed():
         print("[✔] Imagen 'mi_openplc' compilada correctamente.")
     return True
 
-import json
-
-def generate_nodered_flow(num_modbus_a=0, num_s7_b=0):
+def generate_nodered_flow(num_modbus_a=0, num_s7_b=0, num_dnp3_c=0):
     flow = []
     
     # 1. Tab Principal y Nodo Debug General
@@ -89,85 +89,36 @@ def generate_nodered_flow(num_modbus_a=0, num_s7_b=0):
         ip_addr = f"192.168.10.{9 + i}"
         y_base = (i - 1) * 500
 
-        # Cliente Modbus TCP Completo (con tipos numéricos estrictos)
         flow.append({
-            "id": client_id,
-            "type": "modbus-client",
-            "name": f"PLC_Agua_{i}",
-            "clienttype": "tcp",
-            "tcpHost": ip_addr,
-            "tcpPort": 502,
-            "tcpType": "DEFAULT",
-            "listenType": "multiple",
-            "unit_id": 1,
-            "commandDelay": 1,
-            "clientTimeout": 2000,
-            "reconnectOnTimeout": True,
-            "reconnectTimeout": 2000,
-            "parallelUnitIdsAllowed": False,
-            "showServerAddress": False,
-            "showWarnings": True,
-            "showErrors": True,
-            "enableMsgQueue": True,
-            "showLogQueue": False,
-            "queueLogParallelQueues": 1,
-            "bufferCommands": True,
-            "stateLogEnabled": False,
-            "queueLogEnabled": False,
-            "failureLogEnabled": True,
-            "logIOActivities": False,
-            "serialPort": "/dev/ttyUSB0",
-            "serialBaudrate": 9600,
-            "serialDatabits": 8,
-            "serialStopbits": 1,
-            "serialParity": "none",
-            "serialType": "RTU",
-            "serialConnectionDelay": 100
+            "id": client_id, "type": "modbus-client", "name": f"PLC_Agua_{i}", "clienttype": "tcp",
+            "tcpHost": ip_addr, "tcpPort": 502, "tcpType": "DEFAULT", "listenType": "multiple",
+            "unit_id": 1, "commandDelay": 1, "clientTimeout": 2000, "reconnectOnTimeout": True,
+            "reconnectTimeout": 2000, "parallelUnitIdsAllowed": False, "showServerAddress": False,
+            "showWarnings": True, "showErrors": True, "enableMsgQueue": True, "showLogQueue": False,
+            "queueLogParallelQueues": 1, "bufferCommands": True, "stateLogEnabled": False,
+            "queueLogEnabled": False, "failureLogEnabled": True, "logIOActivities": False,
+            "serialPort": "/dev/ttyUSB0", "serialBaudrate": 9600, "serialDatabits": 8,
+            "serialStopbits": 1, "serialParity": "none", "serialType": "RTU", "serialConnectionDelay": 100
         })
 
-        # Lectura Modbus
         flow.append({
-            "id": f"read_modbus_{i}",
-            "type": "modbus-read",
-            "z": tab_id,
-            "name": f"Leer Sensores Modbus {i}",
-            "topic": "",
-            "showStatusActivities": False,
-            "logIOActivities": False,
-            "showErrors": False,
-            "showWarnings": True,
-            "unitid": "",
-            "dataType": "HoldingRegister",
-            "adr": 0,
-            "quantity": 20,
-            "rate": 2,
-            "rateUnit": "s",
-            "delayOnStart": False,
-            "startDelayQty": 0,
-            "server": client_id,
-            "useIOFile": False,
-            "ioFile": "",
-            "useIOForPayload": False,
-            "emptyMsgOnFail": False,
-            "keepMsgProperties": False,
-            "x": 250,
-            "y": y_base + 80,
-            "wires": [[debug_id], []]
+            "id": f"read_modbus_{i}", "type": "modbus-read", "z": tab_id, "name": f"Leer Sensores Modbus {i}",
+            "topic": "", "showStatusActivities": False, "logIOActivities": False, "showErrors": False,
+            "showWarnings": True, "unitid": "", "dataType": "HoldingRegister", "adr": 0, "quantity": 20,
+            "rate": 2, "rateUnit": "s", "delayOnStart": False, "startDelayQty": 0, "server": client_id,
+            "useIOFile": False, "ioFile": "", "useIOForPayload": False, "emptyMsgOnFail": False,
+            "keepMsgProperties": False, "x": 250, "y": y_base + 80, "wires": [[debug_id], []]
         })
 
-        # Controles Modbus (Inyectores + Modbus Write)
         flow.extend([
-            # Control Parada de Emergencia (Coil 0)
             {"id": f"inj_em_on_{i}", "type": "inject", "z": tab_id, "name": f"Activar Parada MB {i}", "payload": "true", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 230, "y": y_base + 160, "wires": [[f"wr_em_{i}"]]},
             {"id": f"inj_em_off_{i}", "type": "inject", "z": tab_id, "name": f"Desactivar Parada MB {i}", "payload": "false", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 250, "y": y_base + 210, "wires": [[f"wr_em_{i}"]]},
             {"id": f"wr_em_{i}", "type": "modbus-write", "z": tab_id, "name": f"Escribir Parada MB {i}", "showStatusActivities": False, "showErrors": False, "showWarnings": True, "unitid": 1, "dataType": "Coil", "adr": 0, "quantity": 1, "server": client_id, "emptyMsgOnFail": False, "keepMsgProperties": False, "delayOnStart": False, "startDelayQty": 0, "x": 600, "y": y_base + 185, "wires": [[], []]},
             
-            # Control Bomba (Coil 1)
             {"id": f"inj_pmp_on_{i}", "type": "inject", "z": tab_id, "name": f"Encender Bomba MB {i}", "payload": "true", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 170, "y": y_base + 280, "wires": [[f"wr_pmp_{i}"]]},
             {"id": f"inj_pmp_off_{i}", "type": "inject", "z": tab_id, "name": f"Apagar Bomba MB {i}", "payload": "false", "payloadType": "bool", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 160, "y": y_base + 330, "wires": [[f"wr_pmp_{i}"]]},
             {"id": f"wr_pmp_{i}", "type": "modbus-write", "z": tab_id, "name": f"Escribir Bomba MB {i}", "showStatusActivities": False, "showErrors": False, "showWarnings": True, "unitid": 1, "dataType": "Coil", "adr": 1, "quantity": 1, "server": client_id, "emptyMsgOnFail": False, "keepMsgProperties": False, "delayOnStart": False, "startDelayQty": 0, "x": 600, "y": y_base + 305, "wires": [[], []]},
             
-            # Control RPM (Holding Register 20)
             {"id": f"inj_rpm_800_{i}", "type": "inject", "z": tab_id, "name": f"Limitar RPM 800 MB {i}", "payload": "800", "payloadType": "num", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 140, "y": y_base + 400, "wires": [[f"wr_rpm_{i}"]]},
             {"id": f"inj_rpm_1500_{i}", "type": "inject", "z": tab_id, "name": f"Restablecer RPM 1500 MB {i}", "payload": "1500", "payloadType": "num", "repeat": "", "crontab": "", "once": False, "onceDelay": 0.1, "topic": "", "x": 150, "y": y_base + 450, "wires": [[f"wr_rpm_{i}"]]},
             {"id": f"wr_rpm_{i}", "type": "modbus-write", "z": tab_id, "name": f"Escribir RPM MB {i}", "showStatusActivities": False, "showErrors": False, "showWarnings": True, "unitid": 1, "dataType": "HoldingRegister", "adr": 20, "quantity": 1, "server": client_id, "emptyMsgOnFail": False, "keepMsgProperties": False, "delayOnStart": False, "startDelayQty": 0, "x": 600, "y": y_base + 425, "wires": [[], []]}
@@ -184,23 +135,10 @@ def generate_nodered_flow(num_modbus_a=0, num_s7_b=0):
         y_base = offset_y_s7 + ((i - 1) * 500)
 
         flow.append({
-            "id": endpoint_id, 
-            "type": "s7 endpoint", 
-            "transport": "iso-on-tcp",
-            "address": ip_addr, 
-            "port": "102", 
-            "rack": "0", 
-            "slot": "1",
-            "localtsaphi": "01",
-            "localtsaplo": "00",
-            "remotetsaphi": "01",
-            "remotetsaplo": "00",
-            "connmode": "rack-slot",
-            "adapter": "",
-            "busaddr": 2,
-            "cycletime": 1000,
-            "timeout": 2000,
-            "name": "",
+            "id": endpoint_id, "type": "s7 endpoint", "transport": "iso-on-tcp", "address": ip_addr, 
+            "port": "102", "rack": "0", "slot": "1", "localtsaphi": "01", "localtsaplo": "00",
+            "remotetsaphi": "01", "remotetsaplo": "00", "connmode": "rack-slot", "adapter": "",
+            "busaddr": 2, "cycletime": 1000, "timeout": 2000, "name": "",
             "vartable": [
                 {"addr": "DB1,INT0", "name": "Temp"},
                 {"addr": "DB1,INT2", "name": "Presion"},
@@ -211,9 +149,9 @@ def generate_nodered_flow(num_modbus_a=0, num_s7_b=0):
         })
 
         flow.append({
-            "id": f"read_s7_{i}", "type": "s7 in", "z": tab_id,
-            "endpoint": endpoint_id, "mode": "single", "variable": "Temp", "diff": True,
-            "name": f"Leer Temp S7 {i}", "x": 150, "y": y_base + 80, "wires": [[debug_id]]
+            "id": f"read_s7_{i}", "type": "s7 in", "z": tab_id, "endpoint": endpoint_id, "mode": "single", 
+            "variable": "Temp", "diff": True, "name": f"Leer Temp S7 {i}", "x": 150, "y": y_base + 80, 
+            "wires": [[debug_id]]
         })
 
         flow.extend([
@@ -229,7 +167,51 @@ def generate_nodered_flow(num_modbus_a=0, num_s7_b=0):
             {"id": f"out_s7_em_{i}", "type": "s7 out", "z": tab_id, "endpoint": endpoint_id, "variable": "Parada", "name": f"Escribir Parada {i}", "x": 440, "y": y_base + 385, "wires": []}
         ])
 
-    # 4. Configuración Global
+    # ---------------------------------------------------------
+    # 4. GENERACIÓN DINÁMICA: ZONA OT C (DNP3 sobre MQTT)
+    # ---------------------------------------------------------
+    if num_dnp3_c > 0:
+        # Nodo de configuración MQTT Broker para Node-RED
+        broker_id = "mqtt_broker_local"
+        flow.append({
+            "id": broker_id,
+            "type": "mqtt-broker",
+            "name": "Mosquitto (Gateway DNP3)",
+            "broker": "192.168.20.15",
+            "port": "1883",
+            "clientid": "NodeRED_SCADA",
+            "autoConnect": True,
+            "usetls": False,
+            "protocolVersion": "4",
+            "keepalive": "60",
+            "cleansession": True
+        })
+
+        offset_y_dnp3 = (num_modbus_a + num_s7_b) * 500
+
+        for i in range(1, num_dnp3_c + 1):
+            y_base = offset_y_dnp3 + ((i - 1) * 500)
+            
+            # Lectura (Suscripción MQTT a los datos publicados por el Gateway DNP3)
+            flow.append({
+                "id": f"mqtt_in_dnp3_{i}",
+                "type": "mqtt in",
+                "z": tab_id,
+                "name": f"Telemetría DNP3 {i}",
+                "topic": "scada/dnp3/telemetria",
+                "qos": "0",
+                "datatype": "json",
+                "broker": broker_id,
+                "nl": False,
+                "rap": True,
+                "rh": 0,
+                "inputs": 0,
+                "x": 200,
+                "y": y_base + 80,
+                "wires": [[debug_id]]
+            })
+
+    # 5. Configuración Global de Módulos
     flow.append({
         "id": "global_config_modules", "type": "global-config", "env": [],
         "modules": {
@@ -240,15 +222,18 @@ def generate_nodered_flow(num_modbus_a=0, num_s7_b=0):
 
     return flow
 
-def save_flows_file(filepath="nodered_data_scada_1/flows.json", num_modbus_a=0, num_s7_b=0):
+def save_flows_file(filepath="nodered_data_scada_1/flows.json", num_modbus_a=0, num_s7_b=0, num_dnp3_c=0):
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
-    flows = generate_nodered_flow(num_modbus_a, num_s7_b)
+    flows = generate_nodered_flow(num_modbus_a, num_s7_b, num_dnp3_c)
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(flows, f, indent=4)
-    print(f"[+] Flujos creados: {num_modbus_a} PLC(s) Modbus y {num_s7_b} PLC(s) Siemens en '{filepath}'.")
+    print(f"[+] Flujos creados: {num_modbus_a} Modbus, {num_s7_b} Siemens, {num_dnp3_c} DNP3 en '{filepath}'.")
 
-def generate_docker_compose(num_modbus_a, num_s7_b, incluir_kali=True):
-    """Genera la arquitectura de red segmentada en docker-compose.generated.yml."""
+def generate_docker_compose(num_modbus_a, num_s7_b, num_dnp3_c=0, incluir_kali=True):
+    # 1. Generar configuración de Mosquitto
+    with open("mosquitto.conf", "w") as f:
+        f.write("listener 1883\nallow_anonymous true\n")
+
     compose_content = f"""name: tfm-purdue-scenarios
 
 networks:
@@ -267,6 +252,11 @@ networks:
     ipam:
       config:
         - subnet: 192.168.30.0/24
+  red_ot_zona_c:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.40.0/24
 
 services:
   router_gw:
@@ -284,6 +274,8 @@ services:
         ipv4_address: 192.168.10.254
       red_ot_zona_b:
         ipv4_address: 192.168.30.254
+      red_ot_zona_c:
+        ipv4_address: 192.168.40.254
 
   nodered_scada_1:
     image: nodered/node-red:latest
@@ -298,6 +290,17 @@ services:
     volumes:
       - ./nodered_data_scada_1:/data
     restart: always
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: broker_mqtt
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    networks:
+      red_control:
+        ipv4_address: 192.168.20.15
 """
 
     if incluir_kali:
@@ -313,12 +316,13 @@ services:
         ipv4_address: 192.168.20.66
 """
 
-# PLCs Modbus (Zona OT A)
     for i in range(1, num_modbus_a + 1):
         compose_content += f"""
   plc_agua_{i}:
     image: mi_openplc
     container_name: plc_agua_{i}
+    environment:
+      - PLC_MODE=MODBUS
     cap_add:
       - NET_ADMIN
     networks:
@@ -330,7 +334,6 @@ services:
     restart: always
 """
 
-# PLCs Siemens S7 (Zona OT B)
     for i in range(1, num_s7_b + 1):
         compose_content += f"""
   plc_s7_{i}:
@@ -346,29 +349,62 @@ services:
     restart: always
 """
 
+    if num_dnp3_c > 0:
+        compose_content += f"""
+  gateway_dnp3:
+    build:
+      context: ./dnp3
+      dockerfile: Dockerfile.gateway
+    container_name: gateway_dnp3
+    environment:
+      - MQTT_BROKER_IP=192.168.20.15
+      - PLC_DNP3_IP=192.168.40.10
+    networks:
+      red_control:
+        ipv4_address: 192.168.20.16
+      red_ot_zona_c:
+        ipv4_address: 192.168.40.16
+    depends_on:
+      - mosquitto
+    restart: always
+"""
+
+    for i in range(1, num_dnp3_c + 1):
+        compose_content += f"""
+  plc_dnp3_{i}:
+    image: mi_openplc
+    container_name: plc_dnp3_{i}
+    environment:
+      - PLC_MODE=DNP3
+    cap_add:
+      - NET_ADMIN
+    networks:
+      red_ot_zona_c:
+        ipv4_address: 192.168.40.{9 + i}
+    ports:
+      - "{8180 + i}:8080"
+      - "{20000 + i}:20000"
+    restart: always
+"""
+        
     with open("docker-compose.generated.yml", "w", encoding="utf-8") as f:
         f.write(compose_content)
     print("[+] Archivo 'docker-compose.generated.yml' generado.")
 
-def deploy_scenario(num_modbus_a, num_s7_b):
+def deploy_scenario(num_modbus_a, num_s7_b, num_dnp3_c=0):
     """Despliega la infraestructura completa e instala paquetes/rutas."""
 
-    #Comprueba si falta alguna imagen
     if num_s7_b > 0 and not build_s7_image_if_needed():
         return
-    if num_modbus_a > 0 and not build_openplc_image_if_needed():
+    if (num_modbus_a > 0 or num_dnp3_c > 0) and not build_openplc_image_if_needed():
         return
 
-    #Genera docker-compose
     print("\n[*] Generando archivos de configuración IaC...")
-    generate_nodered_flow(num_modbus_a, num_s7_b)
-    generate_docker_compose(num_modbus_a, num_s7_b)
+    generate_docker_compose(num_modbus_a, num_s7_b, num_dnp3_c)
 
-    #Levanta los contenedores Docker
     print("\n[*] [1/4] Levantando contenedores con Docker Compose...")
     run_cmd("docker compose -f docker-compose.generated.yml up -d")
 
-    #Instala las librerías de Modbus y S7 en Node-RED y reinicia el contenedor para que Node-RED cargue correctamente
     print("[*] [2/4] Instalando paquetes de S7 y Modbus en Node-RED...")
     run_cmd("docker exec nodered_scada_1 npm install --prefix /data node-red-contrib-modbus node-red-contrib-s7 -qq")
     
@@ -378,13 +414,16 @@ def deploy_scenario(num_modbus_a, num_s7_b):
 
     print("[*] [4/4] Instalando utilidades e inyectando rutas estáticas inter-zona...")
     
-    # Añade rutas desde SCADA y Kali (Red Control) hacia redes OT via Gateway (.254)
+    # Rutas hacia las 3 zonas OT desde Node-RED y Kali
     run_cmd("docker exec -u root nodered_scada_1 ip route add 192.168.10.0/24 via 192.168.20.254", check=False)
     run_cmd("docker exec -u root nodered_scada_1 ip route add 192.168.30.0/24 via 192.168.20.254", check=False)
+    run_cmd("docker exec -u root nodered_scada_1 ip route add 192.168.40.0/24 via 192.168.20.254", check=False)
+    
     run_cmd("docker exec kali_nodo ip route add 192.168.10.0/24 via 192.168.20.254", check=False)
     run_cmd("docker exec kali_nodo ip route add 192.168.30.0/24 via 192.168.20.254", check=False)
+    run_cmd("docker exec kali_nodo ip route add 192.168.40.0/24 via 192.168.20.254", check=False)
 
-    # Rutas desde redes OT hacia Red de Control
+    # Rutas de vuelta desde las zonas OT a la Red de Control
     for i in range(1, num_modbus_a + 1):
         run_cmd(f"docker exec plc_agua_{i} apt-get update -qq && docker exec plc_agua_{i} apt-get install -y iproute2 iputils-ping -qq", check=False)
         run_cmd(f"docker exec plc_agua_{i} ip route add 192.168.20.0/24 via 192.168.10.254", check=False)
@@ -392,12 +431,15 @@ def deploy_scenario(num_modbus_a, num_s7_b):
     for i in range(1, num_s7_b + 1):
         run_cmd(f"docker exec plc_s7_{i} ip route add 192.168.20.0/24 via 192.168.30.254", check=False)
 
+    for i in range(1, num_dnp3_c + 1):
+        run_cmd(f"docker exec plc_dnp3_{i} apt-get update -qq && docker exec plc_dnp3_{i} apt-get install -y iproute2 iputils-ping -qq", check=False)
+        run_cmd(f"docker exec plc_dnp3_{i} ip route add 192.168.20.0/24 via 192.168.40.254", check=False)
+
     print("\n[✔] Escenario Purdue desplegado y enrutado con éxito.")
 
 def clean_environment():
     """Limpia todo el escenario previo."""
     print("\n[*] Eliminando infraestructura activa...")
-    #Detiene todos los contenedores
     if os.path.exists("docker-compose.generated.yml"):
         run_cmd("docker compose -f docker-compose.generated.yml down --remove-orphans", check=False)
     print("[✔] Entorno totalmente limpio.")
@@ -410,35 +452,44 @@ def main_menu():
 ======================================================================
   [1] Desplegar Escenario Siemens S7 (Zona OT B)
   [2] Desplegar Escenario Modbus TCP (Zona OT A)
-  [3] Desplegar Escenario Híbrido S7 + Modbus (Modelo Purdue Completo)
-  [4] Limpiar Entorno (Detener contenedores)
+  [3] Desplegar Escenario DNP3 (Zona OT C)
+  [4] Desplegar Escenario Híbrido Completo (S7 + Modbus + DNP3)
+  [5] Limpiar Entorno (Detener contenedores)
   [0] Salir
 ======================================================================
         """)
-        opt = input("Selecciona una opción [0-4]: ").strip()
+        opt = input("Selecciona una opción [0-5]: ").strip()
         
         if opt == "1":
             n_s7 = int(input("Número de PLCs Siemens S7: "))
-            save_flows_file("nodered_data_scada_1/flows.json", num_modbus_a=0, num_s7_b=n_s7)
-            deploy_scenario(0, n_s7)
+            save_flows_file("nodered_data_scada_1/flows.json", num_modbus_a=0, num_s7_b=n_s7, num_dnp3_c=0)
+            deploy_scenario(0, n_s7, 0)
             input("\nPresiona ENTER para continuar...")
             
         elif opt == "2":
             n_mb = int(input("Número de PLCs Modbus TCP: "))
-            save_flows_file("nodered_data_scada_1/flows.json", num_modbus_a=n_mb, num_s7_b=0)
-            deploy_scenario(n_mb, 0)
+            save_flows_file("nodered_data_scada_1/flows.json", num_modbus_a=n_mb, num_s7_b=0, num_dnp3_c=0)
+            deploy_scenario(n_mb, 0, 0)
             input("\nPresiona ENTER para continuar...")
-            
+
         elif opt == "3":
-            n_mb = int(input("Número de PLCs Modbus TCP (Zona A): "))
-            n_s7 = int(input("Número de PLCs Siemens S7 (Zona B): "))
-            save_flows_file("nodered_data_scada_1/flows.json", num_modbus_a=n_mb, num_s7_b=n_s7)
-            deploy_scenario(n_mb, n_s7)
+            n_dnp3 = int(input("Número de PLCs DNP3: "))
+            save_flows_file("nodered_data_scada_1/flows.json", num_modbus_a=0, num_s7_b=0, num_dnp3_c=n_dnp3)
+            deploy_scenario(0, 0, n_dnp3)
             input("\nPresiona ENTER para continuar...")
             
         elif opt == "4":
+            n_mb = int(input("Número de PLCs Modbus TCP (Zona A): "))
+            n_s7 = int(input("Número de PLCs Siemens S7 (Zona B): "))
+            n_dnp3 = int(input("Número de PLCs DNP3 (Zona C): "))
+            save_flows_file("nodered_data_scada_1/flows.json", num_modbus_a=n_mb, num_s7_b=n_s7, num_dnp3_c=n_dnp3)
+            deploy_scenario(n_mb, n_s7, n_dnp3)
+            input("\nPresiona ENTER para continuar...")
+            
+        elif opt == "5":
             clean_environment()
             input("\nPresiona ENTER para continuar...")
+            
         elif opt == "0":
             sys.exit(0)
 
