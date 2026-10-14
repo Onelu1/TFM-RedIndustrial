@@ -1,0 +1,29 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  DNP3 - Lectura de puntos (integrity poll)
+======================================================================
+  Fecha      : 2026-10-14 09:27:36
+  Objetivo   : 192.168.40.10:20000
+  MITRE ICS  : T0861
+======================================================================
+$ python3 -m modules._cli.dnp3_cli read --target 192.168.40.10 --port 20000
+[*] Conectando a PLC DNP3 en 192.168.40.10:20000...
+    [debug] TX frame (18 bytes): 05640bc40a000100acd1c0c1013c0106f973
+    [debug] Frame #1: FC=0x81 UNS=False CON=False SEQ=1 app_len=249
+    [debug] Hex: c181020001020000070101010101010101030200000702020202020202021401000007020000000002000000000200000000020000000002000000000200000000020000000002000000001501000007020000000002000000000200000000020000000002000000000200000000020000000002000000001e01000007010000000001000000000100000000010000000001000000000100000000010000000001000000000a02000007810181810101010128010000070133000000013c0000000100000000010000000001000000000100000000010000000001000000003204000007000000000000000000000000000000000000000000
+[+] Conexion TCP establecida. Integrity poll completado.
+
+==================================================
+        LECTURA DNP3 (Integrity Poll)
+==================================================
+ [BIN] Indice 0 | Estado Bomba Principal (%QX0.0): OFF
+ [BIN] Indice 1 | Alarma Sobrepresion (%QX0.1): OFF
+ [BIN] Indice 2 | Modo Manual: OFF
+ [BIN] Indice 3 | Comando Bomba (cmd_bomba): OFF
+ [BIN] Indice 4 | Binario 4: OFF
+ [BIN] Indice 5 | Binario 5: OFF
+ [BIN] Indice 6 | Binario 6: OFF
+ [BIN] Indice 7 | Binario 7: OFF
+==================================================
+[+] Sesion DNP3 finalizada.
+[=] Código de salida: 0

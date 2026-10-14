@@ -1,0 +1,22 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  Descubrimiento Modbus (modbus-discover)
+======================================================================
+  Fecha      : 2026-10-09 21:47:24
+  Objetivo   : 192.168.10.10
+  MITRE ICS  : T0846, T0888
+======================================================================
+$ nmap -sT -Pn -sV --script modbus-discover -p 502 192.168.10.10
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-09 21:47 +0000
+Nmap scan report for 192.168.10.10
+Host is up (0.000012s latency).
+
+PORT    STATE SERVICE VERSION
+502/tcp open  modbus  Modbus TCP
+| modbus-discover: 
+|   sid 0x1: 
+|_    error: ILLEGAL FUNCTION
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 40.26 seconds
+[=] Código de salida: 0

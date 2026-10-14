@@ -1,4 +1,4 @@
-PROGRAM SimuladorPlanta
+ PROGRAM SimuladorPlanta
   VAR_EXTERNAL
     Sensor_Temp_Caldera_1    : INT; 
     Sensor_Temp_Caldera_2    : INT; 

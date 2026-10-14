@@ -1,0 +1,48 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  Descubrimiento Modbus (modbus-discover)
+======================================================================
+  Fecha      : 2026-10-09 21:41:51
+  Objetivo   : 192.168.10.10
+  MITRE ICS  : T0846, T0888
+======================================================================
+$ proxychains nmap -sT -Pn -sV --script modbus-discover -p 502 192.168.10.10
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] DLL init: proxychains-ng 4.17
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-09 21:41 +0000
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+Nmap scan report for 192.168.10.10
+Host is up (0.00s latency).
+
+PORT    STATE SERVICE VERSION
+502/tcp open  modbus  Modbus TCP
+| modbus-discover: 
+|   sid 0x1: 
+|_    error: ILLEGAL FUNCTION
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 40.40 seconds
+[=] Código de salida: 0

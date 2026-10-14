@@ -1,0 +1,27 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  DNP3 - Lectura de puntos (integrity poll)
+======================================================================
+  Fecha      : 2026-10-14 10:10:32
+  Objetivo   : 192.168.40.11:20000
+  MITRE ICS  : T0861
+======================================================================
+$ python3 -m modules._cli.dnp3_cli read --target 192.168.40.11 --port 20000
+[*] Conectando a PLC DNP3 en 192.168.40.11:20000...
+    [dnp3] Parando gateway_dnp3_2 para liberar conexion DNP3...
+    [dnp3] gateway_dnp3_2 parado.
+    [dnp3] gateway_dnp3_2 rearrancado.
+[+] Integrity poll completado.
+
+==================================================
+        LECTURA DNP3 (Integrity Poll)
+==================================================
+ [BOUT] Indice 0 | Estado Bomba Principal (%QX0.0): ON
+ [BOUT] Indice 1 | Alarma Sobrepresion (%QX0.1): OFF
+ [BOUT] Indice 2 | Modo Manual: ON
+ [BOUT] Indice 3 | Comando Bomba (cmd_bomba): ON
+ [AOUT] Indice 0 | Temp. Caldera 1 (%QW0): 78.00
+ [AOUT] Indice 1 | Temp. Caldera 2 (%QW1): 39.00
+==================================================
+[+] Sesion DNP3 finalizada.
+[=] Código de salida: 0

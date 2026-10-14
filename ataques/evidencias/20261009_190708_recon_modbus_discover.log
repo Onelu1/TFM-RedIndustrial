@@ -1,0 +1,13 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  Descubrimiento Modbus (modbus-discover)
+======================================================================
+  Fecha      : 2026-10-09 19:07:08
+  Objetivo   : 192.168.10.10
+  MITRE ICS  : T0846, T0888
+======================================================================
+$ nmap -sV --script modbus-discover -p 502 192.168.10.10
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-09 19:07 +0000
+Note: Host seems down. If it is really up, but blocking our ping probes, try -Pn
+Nmap done: 1 IP address (0 hosts up) scanned in 3.22 seconds
+[=] Código de salida: 0

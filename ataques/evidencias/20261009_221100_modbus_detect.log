@@ -1,0 +1,31 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  Modbus - Detección de servicio
+======================================================================
+  Fecha      : 2026-10-09 22:11:00
+  Objetivo   : 192.168.10.10:502
+  MITRE ICS  : T0846, T0888
+======================================================================
+$ proxychains msfconsole -q -r /ataques/resource_scripts/modbusdetect.rc
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] DLL init: proxychains-ng 4.17
+[*] Processing /ataques/resource_scripts/modbusdetect.rc for ERB directives.
+resource (/ataques/resource_scripts/modbusdetect.rc)> use auxiliary/scanner/scada/modbusdetect
+resource (/ataques/resource_scripts/modbusdetect.rc)> set RHOSTS 192.168.10.10
+RHOSTS => 192.168.10.10
+resource (/ataques/resource_scripts/modbusdetect.rc)> set RPORT 502
+RPORT => 502
+resource (/ataques/resource_scripts/modbusdetect.rc)> set THREADS 10
+THREADS => 10
+resource (/ataques/resource_scripts/modbusdetect.rc)> run
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[+] 192.168.10.10:502     - 192.168.10.10:502 - MODBUS - received correct MODBUS/TCP header (unit-ID: 1)
+[*] 192.168.10.10:502     - Scanned 1 of 1 hosts (100% complete)
+[*] Auxiliary module execution completed
+resource (/ataques/resource_scripts/modbusdetect.rc)> exit
+[=] Código de salida: 0

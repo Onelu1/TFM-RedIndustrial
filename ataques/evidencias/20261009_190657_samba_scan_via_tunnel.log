@@ -1,0 +1,25 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  Samba - Escaneo de red OT a través del túnel
+======================================================================
+  Fecha      : 2026-10-09 19:06:57
+  Objetivo   : 192.168.40.10:20000
+  MITRE ICS  : T1046
+======================================================================
+$ proxychains nmap -sT -Pn -p 20000 192.168.40.10
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] DLL init: proxychains-ng 4.17
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-09 19:06 +0000
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.40.10:20000  ...  OK
+Nmap scan report for 192.168.40.10
+Host is up (0.00s latency).
+
+PORT      STATE SERVICE
+20000/tcp open  dnp
+
+Nmap done: 1 IP address (1 host up) scanned in 0.52 seconds
+[=] Código de salida: 0

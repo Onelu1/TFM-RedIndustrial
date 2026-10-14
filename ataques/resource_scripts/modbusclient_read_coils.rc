@@ -1,0 +1,9 @@
+use auxiliary/scanner/scada/modbusclient
+set RHOSTS 192.168.10.10
+set RPORT 502
+set UNIT_NUMBER 1
+set ACTION READ_COILS
+set DATA_ADDRESS 0
+set NUMBER 2
+run
+exit

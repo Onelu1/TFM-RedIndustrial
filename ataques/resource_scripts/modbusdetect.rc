@@ -1,0 +1,6 @@
+use auxiliary/scanner/scada/modbusdetect
+set RHOSTS 192.168.10.10
+set RPORT 502
+set THREADS 10
+run
+exit

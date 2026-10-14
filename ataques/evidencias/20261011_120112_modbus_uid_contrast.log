@@ -1,0 +1,118 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  Modbus - Comparativa UID: findunitid vs modbusclient
+======================================================================
+  Fecha      : 2026-10-11 12:01:12
+  Objetivo   : 192.168.10.10:502 UID 1-5 (RHR addr=0, N=5)
+  MITRE ICS  : T0888, T0861
+======================================================================
+[*] FASE 1 - modbus_findunitid (solo valida cabecera MBAP, tiende a dar falsos positivos ante ACL con excepcion 0x0B)
+$ stdbuf -oL -eL msfconsole -q -r /ataques/resource_scripts/modbus_uid_contrast.rc
+[*] Processing /ataques/resource_scripts/modbus_uid_contrast.rc for ERB directives.
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> use auxiliary/scanner/scada/modbus_findunitid
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> set RHOSTS 192.168.10.10
+RHOSTS => 192.168.10.10
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> set RPORT 502
+RPORT => 502
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> set UNIT_ID_FROM 1
+UNIT_ID_FROM => 1
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> set UNIT_ID_TO 5
+UNIT_ID_TO => 5
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> run
+[*] Running module against 192.168.10.10
+[+] 192.168.10.10:502 - Received: correct MODBUS/TCP from stationID  1
+[+] 192.168.10.10:502 - Received: correct MODBUS/TCP from stationID  2
+[+] 192.168.10.10:502 - Received: correct MODBUS/TCP from stationID  3
+[+] 192.168.10.10:502 - Received: correct MODBUS/TCP from stationID  4
+[+] 192.168.10.10:502 - Received: correct MODBUS/TCP from stationID  5
+[*] Auxiliary module execution completed
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> use auxiliary/scanner/scada/modbusclient
+[*] Setting default action READ_HOLDING_REGISTERS - view all 9 actions with the show actions command
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> set RHOSTS 192.168.10.10
+RHOSTS => 192.168.10.10
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> set RPORT 502
+RPORT => 502
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> set ACTION READ_REGISTERS
+ACTION => READ_REGISTERS
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> set DATA_ADDRESS 0
+DATA_ADDRESS => 0
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> set NUMBER 5
+NUMBER => 5
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> echo === FASE 2 modbusclient UID=1 ===
+[*] exec: echo === FASE 2 modbusclient UID=1 ===
+
+=== FASE 2 modbusclient UID=1 ===
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> set UNIT_NUMBER 1
+UNIT_NUMBER => 1
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> run
+[*] Running module against 192.168.10.10
+[*] 192.168.10.10:502 - Sending READ HOLDING REGISTERS...
+[+] 192.168.10.10:502 - 5 register values from address 0 : 
+[+] 192.168.10.10:502 - [89, 30, 22, 8, 53]
+[*] Auxiliary module execution completed
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> echo === FASE 2 modbusclient UID=2 ===
+[*] exec: echo === FASE 2 modbusclient UID=2 ===
+
+=== FASE 2 modbusclient UID=2 ===
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> set UNIT_NUMBER 2
+UNIT_NUMBER => 2
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> run
+[*] Running module against 192.168.10.10
+[*] 192.168.10.10:502 - Sending READ HOLDING REGISTERS...
+[-] 192.168.10.10:502 - Unknown error
+[*] Auxiliary module execution completed
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> echo === FASE 2 modbusclient UID=3 ===
+[*] exec: echo === FASE 2 modbusclient UID=3 ===
+
+=== FASE 2 modbusclient UID=3 ===
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> set UNIT_NUMBER 3
+UNIT_NUMBER => 3
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> run
+[*] Running module against 192.168.10.10
+[*] 192.168.10.10:502 - Sending READ HOLDING REGISTERS...
+[-] 192.168.10.10:502 - Unknown error
+[*] Auxiliary module execution completed
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> echo === FASE 2 modbusclient UID=4 ===
+[*] exec: echo === FASE 2 modbusclient UID=4 ===
+
+=== FASE 2 modbusclient UID=4 ===
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> set UNIT_NUMBER 4
+UNIT_NUMBER => 4
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> run
+[*] Running module against 192.168.10.10
+[*] 192.168.10.10:502 - Sending READ HOLDING REGISTERS...
+[-] 192.168.10.10:502 - Unknown error
+[*] Auxiliary module execution completed
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> echo === FASE 2 modbusclient UID=5 ===
+[*] exec: echo === FASE 2 modbusclient UID=5 ===
+
+=== FASE 2 modbusclient UID=5 ===
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> set UNIT_NUMBER 5
+UNIT_NUMBER => 5
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> run
+[*] Running module against 192.168.10.10
+[*] 192.168.10.10:502 - Sending READ HOLDING REGISTERS...
+[-] 192.168.10.10:502 - Unknown error
+[*] Auxiliary module execution completed
+resource (/ataques/resource_scripts/modbus_uid_contrast.rc)> exit
+[=] Código de salida: 0
+
+======================================================================
+  VEREDICTO (parseo automatico de la salida de msfconsole)
+======================================================================
+ UID  findunitid        modbusclient                        valido?
+-------------------------------------------------------------------
+   1  correct           sin ejecutar                        ?
+   2  correct           Unknown error (excepcion 0x0B)      NO (falso positivo findunitid)
+   3  correct           Unknown error (excepcion 0x0B)      NO (falso positivo findunitid)
+   4  correct           Unknown error (excepcion 0x0B)      NO (falso positivo findunitid)
+   5  correct           Unknown error (excepcion 0x0B)      NO (falso positivo findunitid)
+
+Falsos positivos del findunitid: 4 de 5
+
+Explicacion: modbus_findunitid de MSF solo valida la cabecera MBAP
+(bytes 0..3, transaction + protocol id). La excepcion Modbus 0x0B
+conserva esa cabecera, por eso aparece como 'correct'. modbusclient
+interpreta la respuesta completa (FC | 0x80, exc_code) y si detecta
+la excepcion devuelta por la ACL del PLC.
+======================================================================

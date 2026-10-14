@@ -1,0 +1,93 @@
+--- a/webserver/core/modbus.cpp
++++ b/webserver/core/modbus.cpp
+@@ -31,6 +31,62 @@
+ #include "ladder.h"
+ #include <string.h>
+ 
++/* =====================================================================
++ * TFM UID ACL - inicio
++ * Valida el Unit Identifier (byte 6 del MBAP) de Modbus TCP contra el
++ * fichero /etc/openplc/acl.conf.  Si el fichero no existe o no define
++ * expected_uid, el comportamiento es el original (no se filtra el UID).
++ * Añadido por TFM, parche uid_acl.patch.
++ * ===================================================================== */
++#include <errno.h>
++#include <ctype.h>
++
++static int tfm_uid_acl_cached = -2;  /* -2=sin leer, -1=desactivado, >=0=UID */
++
++static int tfm_load_expected_uid(void)
++{
++    FILE *f = fopen("/etc/openplc/acl.conf", "r");
++    if (f == NULL) return -1;
++
++    char line[256];
++    int result = -1;
++    while (fgets(line, sizeof(line), f) != NULL)
++    {
++        char *p = line;
++        while (*p && isspace((unsigned char)*p)) p++;
++        if (*p == '#' || *p == '\0') continue;
++        if (strncmp(p, "expected_uid", 12) != 0) continue;
++        p += 12;
++        while (*p && (isspace((unsigned char)*p) || *p == '=')) p++;
++        char *end;
++        long v = strtol(p, &end, 10);
++        if (end != p && v >= 0 && v <= 255)
++        {
++            result = (int)v;
++            break;
++        }
++    }
++    fclose(f);
++    return result;
++}
++
++static int tfm_get_expected_uid(void)
++{
++    int cached = tfm_uid_acl_cached;
++    if (cached != -2) return cached;
++    int v = tfm_load_expected_uid();
++    tfm_uid_acl_cached = v;
++    if (v >= 0)
++        printf("[TFM-ACL] Modbus UID exigido = %d (de /etc/openplc/acl.conf)\n", v);
++    else
++        printf("[TFM-ACL] /etc/openplc/acl.conf ausente o sin expected_uid - UID no filtrado\n");
++    fflush(stdout);
++    return v;
++}
++/* =====================================================================
++ * TFM UID ACL - fin
++ * ===================================================================== */
++
+ #define MAX_DISCRETE_INPUT              8192
+ #define MAX_COILS                       8192
+ #define MAX_HOLD_REGS                   8192
+@@ -1114,6 +1170,27 @@
+     void *value = &buffer[13];
+     void *endianness_check = &buffer[8];
+ 
++    /* ------- TFM UID ACL: validar Unit Identifier (byte 6 MBAP) ------- */
++    if (bufferSize >= 8)
++    {
++        int tfm_expected = tfm_get_expected_uid();
++        if (tfm_expected >= 0 && (int)buffer[6] != tfm_expected)
++        {
++            printf("[TFM-ACL] UID rechazado: recibido=%u esperado=%d (FC=%u)\n",
++                   (unsigned)buffer[6], tfm_expected, (unsigned)buffer[7]);
++            fflush(stdout);
++            uint8_t received_fc = buffer[7];
++            buffer[4] = 0x00;               /* MBAP length high                */
++            buffer[5] = 0x03;               /* MBAP length: UID + FC_err + exc */
++            /* buffer[6] (UID) se preserva (comportamiento de gateway real)    */
++            buffer[7] = received_fc | 0x80; /* function code + 0x80 = error    */
++            buffer[8] = 0x0B;               /* Gateway Target Device Failed    */
++            MessageLength = 9;
++            return 9;
++        }
++    }
++    /* ------------------------------------------------------------------ */
++
+     //check if the message is long enough
+     if (bufferSize < 8)
+     {

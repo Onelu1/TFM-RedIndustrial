@@ -1,0 +1,10 @@
+# Programa activo del PLC (metadatos exfiltrados por HTTP)
+target     : 192.168.10.10
+table_id   : 18
+name       : SensoresModbus
+file       : programa_sensores.st
+descr      : 
+date       : Oct 12, 2026 - 04:59PM
+note       : Esta build de OpenPLC no expone el .st por HTTP;
+             el fichero fuente queda en el filesystem del PLC,
+             accesible solo con shell en el contenedor.

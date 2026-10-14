@@ -1,0 +1,7 @@
+use auxiliary/scanner/scada/modbus_findunitid
+set RHOSTS 192.168.10.11
+set RPORT 502
+set UNIT_ID_FROM 1
+set UNIT_ID_TO 5
+run
+exit

@@ -1,0 +1,29 @@
+use auxiliary/scanner/scada/modbus_findunitid
+set RHOSTS 192.168.10.10
+set RPORT 502
+set UNIT_ID_FROM 1
+set UNIT_ID_TO 5
+run
+
+use auxiliary/scanner/scada/modbusclient
+set RHOSTS 192.168.10.10
+set RPORT 502
+set ACTION READ_REGISTERS
+set DATA_ADDRESS 0
+set NUMBER 5
+echo === FASE 2 modbusclient UID=1 ===
+set UNIT_NUMBER 1
+run
+echo === FASE 2 modbusclient UID=2 ===
+set UNIT_NUMBER 2
+run
+echo === FASE 2 modbusclient UID=3 ===
+set UNIT_NUMBER 3
+run
+echo === FASE 2 modbusclient UID=4 ===
+set UNIT_NUMBER 4
+run
+echo === FASE 2 modbusclient UID=5 ===
+set UNIT_NUMBER 5
+run
+exit

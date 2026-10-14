@@ -1,0 +1,16 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  DNP3 - Lectura de puntos (integrity poll)
+======================================================================
+  Fecha      : 2026-10-14 09:44:30
+  Objetivo   : 192.168.40.10:20000
+  MITRE ICS  : T0861
+======================================================================
+$ python3 -m modules._cli.dnp3_cli read --target 192.168.40.10 --port 20000
+[*] Conectando a PLC DNP3 en 192.168.40.10:20000...
+    [dnp3] TX Reset Link States: 056405c00a000100b1ac
+    [dnp3] RX: DLL ctrl=0x00 dest=1 src=10 ud_len=0 | DIR=0 PRM=0 FC=0
+    [dnp3] <- ACK recibido (link ready)
+    [dnp3] TX request: 05640bc40a000100acd1c0c1013c0106f973
+[!] Error en la lectura DNP3: No se recibio respuesta solicitada del outstation
+[=] Código de salida: 0

