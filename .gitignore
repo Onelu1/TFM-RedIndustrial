@@ -44,3 +44,11 @@ escenario antiguo/
 .env
 .vscode/
 .idea/
+
+# ---------------------------------------------------------------
+# Excepciones: fixtures de la suite de tests SÍ se versionan,
+# aunque los nombres coincidan con artefactos generados.
+# ---------------------------------------------------------------
+!tests/fixtures/
+!tests/fixtures/**
+

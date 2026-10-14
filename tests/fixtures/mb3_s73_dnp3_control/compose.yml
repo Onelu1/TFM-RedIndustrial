@@ -1,0 +1,328 @@
+name: tfm-purdue-scenarios
+
+networks:
+  red_control:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.20.0/24
+  red_ot_zona_a:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.10.0/24
+  red_ot_zona_b:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.30.0/24
+  red_ot_zona_c:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.40.0/24
+  red_monitorizacion:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.50.0/24
+  red_empresa:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.60.0/24
+
+services:
+  router_gw:
+    image: alpine:latest
+    container_name: router_gw
+    sysctls:
+      - net.ipv4.ip_forward=1
+    command: tail -f /dev/null
+    cap_add:
+      - NET_ADMIN
+    networks:
+      red_control:
+        ipv4_address: 192.168.20.254
+      red_ot_zona_a:
+        ipv4_address: 192.168.10.254
+      red_ot_zona_b:
+        ipv4_address: 192.168.30.254
+      red_ot_zona_c:
+        ipv4_address: 192.168.40.254
+      red_monitorizacion:
+        ipv4_address: 192.168.50.254
+      red_empresa:
+        ipv4_address: 192.168.60.254
+
+  nodered_scada_1:
+    image: nodered/node-red:latest
+    container_name: nodered_scada_1
+    cap_add:
+      - NET_ADMIN
+    networks:
+      red_control:
+        ipv4_address: 192.168.20.10
+    ports:
+      - "1880:1880"
+    volumes:
+      - ./nodered_data_scada_1:/data
+    restart: always
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: broker_mqtt
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    networks:
+      red_control:
+        ipv4_address: 192.168.20.15
+ 
+  # --- ZONA C: RED DE EMPRESA (Pivote Vulnerable Samba) ---
+  srv_empresa:
+    image: dperson/samba
+    container_name: srv_empresa
+    cap_add:
+      - NET_ADMIN
+    networks:
+      red_empresa:
+        ipv4_address: 192.168.60.50
+      red_control:
+        ipv4_address: 192.168.20.50
+    ports:
+      - "2222:22"
+    volumes:
+      - ./recurso_compartido:/mount
+    command: >
+      sh -c "apk update && apk add openssh && ssh-keygen -A && 
+      mkdir -p /root/.ssh && chmod 700 /root/.ssh && 
+      cp /mount/ssh_keys/id_rsa.pub /root/.ssh/authorized_keys && 
+      chmod 600 /root/.ssh/authorized_keys && 
+      chmod 700 /root && 
+      echo 'root:root' | chpasswd && 
+      passwd -u root && 
+      sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config && 
+      sed -i 's/#PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config && 
+      sed -i 's/.*AllowTcpForwarding.*/AllowTcpForwarding yes/g' /etc/ssh/sshd_config && 
+      sed -i 's/.*DisableForwarding.*/DisableForwarding no/g' /etc/ssh/sshd_config && 
+      echo 'AllowTcpForwarding yes' >> /etc/ssh/sshd_config && 
+      echo 'PubkeyAcceptedKeyTypes +ssh-rsa' >> /etc/ssh/sshd_config && 
+      echo 'HostKeyAlgorithms +ssh-rsa' >> /etc/ssh/sshd_config && 
+      /usr/sbin/sshd && 
+      samba.sh -s 'Backups_SCADA;/mount;yes;no;yes;all;none' -p"
+    restart: always
+
+  # --- ZONA D: RED DE MONITORIZACIÓN ---
+  srv_monitorizacion:
+    image: dperson/samba
+    container_name: srv_monitorizacion
+    cap_add:
+      - NET_ADMIN
+    networks:
+      red_monitorizacion:
+        ipv4_address: 192.168.50.10
+    command: '-s "logs;/share;yes;no;yes;all;none" -p'
+    restart: always
+
+  kali_nodo:
+    image: kalilinux/kali-rolling
+    container_name: kali_nodo
+    cap_add:
+      - NET_ADMIN
+    command: /bin/sh -c "apt-get update && apt-get install -y nmap iputils-ping iproute2 openssh-client smbclient proxychains4 python3 python3-pip python3-dev build-essential cmake metasploit-framework && sed -i 's/socks4/socks5/' /etc/proxychains4.conf && pip3 install --break-system-packages flask python-snap7 requests pymodbus || true && tail -f /dev/null"
+    networks:
+      red_control:
+        ipv4_address: 192.168.20.66
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./ataques:/ataques
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  plc_agua_1:
+    image: mi_openplc
+    container_name: plc_agua_1
+    environment:
+      - PLC_MODE=MODBUS
+    cap_add:
+      - NET_ADMIN
+    networks:
+      red_ot_zona_a:
+        ipv4_address: 192.168.10.10
+    ports:
+      - "8081:8080"
+      - "5021:502"
+    volumes:
+      - ./openplc/acl_plc_agua_1.conf:/etc/openplc/acl.conf:ro
+    restart: always
+
+  plc_agua_2:
+    image: mi_openplc
+    container_name: plc_agua_2
+    environment:
+      - PLC_MODE=MODBUS
+    cap_add:
+      - NET_ADMIN
+    networks:
+      red_ot_zona_a:
+        ipv4_address: 192.168.10.11
+    ports:
+      - "8082:8080"
+      - "5022:502"
+    volumes:
+      - ./openplc/acl_plc_agua_2.conf:/etc/openplc/acl.conf:ro
+    restart: always
+
+  plc_agua_3:
+    image: mi_openplc
+    container_name: plc_agua_3
+    environment:
+      - PLC_MODE=MODBUS
+    cap_add:
+      - NET_ADMIN
+    networks:
+      red_ot_zona_a:
+        ipv4_address: 192.168.10.12
+    ports:
+      - "8083:8080"
+      - "5023:502"
+    volumes:
+      - ./openplc/acl_plc_agua_3.conf:/etc/openplc/acl.conf:ro
+    restart: always
+
+  plc_s7_1:
+    image: mi_plc_siemens
+    container_name: plc_s7_1
+    cap_add:
+      - NET_ADMIN
+    networks:
+      red_ot_zona_b:
+        ipv4_address: 192.168.30.10
+    ports:
+      - "1021:102"
+    restart: always
+
+  plc_s7_2:
+    image: mi_plc_siemens
+    container_name: plc_s7_2
+    cap_add:
+      - NET_ADMIN
+    networks:
+      red_ot_zona_b:
+        ipv4_address: 192.168.30.11
+    ports:
+      - "1022:102"
+    restart: always
+
+  plc_s7_3:
+    image: mi_plc_siemens
+    container_name: plc_s7_3
+    cap_add:
+      - NET_ADMIN
+    networks:
+      red_ot_zona_b:
+        ipv4_address: 192.168.30.12
+    ports:
+      - "1023:102"
+    restart: always
+
+  gateway_dnp3_1:
+    build:
+      context: ./dnp3
+      dockerfile: Dockerfile.gateway
+    container_name: gateway_dnp3_1
+    environment:
+      - MQTT_BROKER_IP=192.168.20.15
+      - PLC_DNP3_IP=192.168.40.10
+      - PLC_ID=1
+    networks:
+      red_control:
+        ipv4_address: 192.168.20.16
+      red_ot_zona_c:
+        ipv4_address: 192.168.40.16
+    depends_on:
+      - mosquitto
+    restart: always
+
+  plc_dnp3_1:
+    image: mi_openplc
+    container_name: plc_dnp3_1
+    environment:
+      - PLC_MODE=DNP3
+    cap_add:
+      - NET_ADMIN
+    networks:
+      red_ot_zona_c:
+        ipv4_address: 192.168.40.10
+    ports:
+      - "8181:8080"
+      - "20001:20000"
+    restart: always
+
+  gateway_dnp3_2:
+    build:
+      context: ./dnp3
+      dockerfile: Dockerfile.gateway
+    container_name: gateway_dnp3_2
+    environment:
+      - MQTT_BROKER_IP=192.168.20.15
+      - PLC_DNP3_IP=192.168.40.11
+      - PLC_ID=2
+    networks:
+      red_control:
+        ipv4_address: 192.168.20.17
+      red_ot_zona_c:
+        ipv4_address: 192.168.40.17
+    depends_on:
+      - mosquitto
+    restart: always
+
+  plc_dnp3_2:
+    image: mi_openplc
+    container_name: plc_dnp3_2
+    environment:
+      - PLC_MODE=DNP3
+    cap_add:
+      - NET_ADMIN
+    networks:
+      red_ot_zona_c:
+        ipv4_address: 192.168.40.11
+    ports:
+      - "8182:8080"
+      - "20002:20000"
+    restart: always
+
+  gateway_dnp3_3:
+    build:
+      context: ./dnp3
+      dockerfile: Dockerfile.gateway
+    container_name: gateway_dnp3_3
+    environment:
+      - MQTT_BROKER_IP=192.168.20.15
+      - PLC_DNP3_IP=192.168.40.12
+      - PLC_ID=3
+    networks:
+      red_control:
+        ipv4_address: 192.168.20.18
+      red_ot_zona_c:
+        ipv4_address: 192.168.40.18
+    depends_on:
+      - mosquitto
+    restart: always
+
+  plc_dnp3_3:
+    image: mi_openplc
+    container_name: plc_dnp3_3
+    environment:
+      - PLC_MODE=DNP3
+    cap_add:
+      - NET_ADMIN
+    networks:
+      red_ot_zona_c:
+        ipv4_address: 192.168.40.12
+    ports:
+      - "8183:8080"
+      - "20003:20000"
+    restart: always

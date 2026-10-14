@@ -1,0 +1,3241 @@
+[
+    {
+        "id": "tab_supervision_purdue",
+        "type": "tab",
+        "label": "Supervisi\u00f3n OT Multi-Protocolo (Purdue)",
+        "disabled": false
+    },
+    {
+        "id": "debug_telemetria_general",
+        "type": "debug",
+        "z": "tab_supervision_purdue",
+        "name": "Telemetr\u00eda SCADA",
+        "active": true,
+        "tosidebar": true,
+        "complete": "payload",
+        "x": 1050,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "ui_base_dashboard",
+        "type": "ui-base",
+        "name": "My Dashboard",
+        "path": "/dashboard",
+        "includeClientData": true,
+        "acceptsClientConfig": [
+            "ui-notification",
+            "ui-control"
+        ],
+        "showPathInSidebar": false,
+        "navigationStyle": "default",
+        "titleBarStyle": "default"
+    },
+    {
+        "id": "ui_theme_default",
+        "type": "ui-theme",
+        "name": "Default Theme",
+        "colors": {
+            "surface": "#fcfcfd",
+            "primary": "#0d74ce",
+            "bgPage": "#f9f9fb",
+            "groupBg": "#ffffff",
+            "groupOutline": "#d9d9e0"
+        },
+        "sizes": {
+            "density": "default",
+            "pagePadding": "12px",
+            "groupGap": "12px",
+            "groupBorderRadius": "4px",
+            "widgetGap": "12px"
+        }
+    },
+    {
+        "id": "ui_page_planta",
+        "type": "ui-page",
+        "name": "Planta Modbus",
+        "ui": "ui_base_dashboard",
+        "path": "/page1",
+        "icon": "home",
+        "layout": "grid",
+        "theme": "ui_theme_default",
+        "order": 1,
+        "className": "",
+        "visible": "true",
+        "disabled": "false"
+    },
+    {
+        "id": "ui_page_s7",
+        "type": "ui-page",
+        "name": "Planta S7",
+        "ui": "ui_base_dashboard",
+        "path": "/page2",
+        "icon": "home",
+        "layout": "grid",
+        "theme": "ui_theme_default",
+        "order": 2,
+        "className": "",
+        "visible": "true",
+        "disabled": "false"
+    },
+    {
+        "id": "client_modbus_1",
+        "type": "modbus-client",
+        "name": "PLC_Agua_1",
+        "clienttype": "tcp",
+        "tcpHost": "192.168.10.10",
+        "tcpPort": 502,
+        "tcpType": "DEFAULT",
+        "listenType": "multiple",
+        "unit_id": 1,
+        "commandDelay": 1,
+        "clientTimeout": 2000,
+        "reconnectOnTimeout": true,
+        "reconnectTimeout": 2000,
+        "parallelUnitIdsAllowed": false,
+        "showServerAddress": false,
+        "showWarnings": true,
+        "showErrors": true,
+        "enableMsgQueue": true,
+        "showLogQueue": false,
+        "queueLogParallelQueues": 1,
+        "bufferCommands": true,
+        "stateLogEnabled": false,
+        "queueLogEnabled": false,
+        "failureLogEnabled": true,
+        "logIOActivities": false,
+        "serialPort": "/dev/ttyUSB0",
+        "serialBaudrate": "9600",
+        "serialDatabits": "8",
+        "serialStopbits": "1",
+        "serialParity": "none",
+        "serialType": "RTU",
+        "serialConnectionDelay": "100"
+    },
+    {
+        "id": "ui_group_ctrl_1",
+        "type": "ui-group",
+        "name": "Controles PLC 1",
+        "page": "ui_page_planta",
+        "width": 6,
+        "height": 1,
+        "order": 1,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "ui_group_temp_1",
+        "type": "ui-group",
+        "name": "Temperaturas PLC 1",
+        "page": "ui_page_planta",
+        "width": 6,
+        "height": 1,
+        "order": 2,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "read_modbus_1",
+        "type": "modbus-read",
+        "z": "tab_supervision_purdue",
+        "name": "Leer Sensores MB 1",
+        "dataType": "HoldingRegister",
+        "adr": 0,
+        "quantity": 20,
+        "rate": 2,
+        "rateUnit": "s",
+        "server": "client_modbus_1",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "unitid": 1,
+        "useIOFile": false,
+        "ioFile": "",
+        "useIOForPayload": false,
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayQty": 0,
+        "x": 150,
+        "y": 120,
+        "wires": [
+            [
+                "func_split_1"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "func_split_1",
+        "type": "function",
+        "z": "tab_supervision_purdue",
+        "name": "Separar Datos 1",
+        "func": "return [{ payload: msg.payload[0] }, { payload: msg.payload[1] }, { payload: msg.payload[15] }];",
+        "outputs": 3,
+        "x": 360,
+        "y": 140,
+        "wires": [
+            [
+                "gauge_t1_1"
+            ],
+            [
+                "gauge_t2_1"
+            ],
+            [
+                "gauge_rpm_1"
+            ]
+        ]
+    },
+    {
+        "id": "gauge_t1_1",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "Temp caldera 1",
+        "group": "ui_group_temp_1",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "gtype": "gauge-half",
+        "title": "Temp Caldera 1",
+        "units": "\u00baC",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "60",
+                "color": "#ffc000",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "85",
+                "color": "#ff3300",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": 100,
+        "value": "payload",
+        "valueType": "msg",
+        "alwaysShowTitle": false,
+        "icon": "",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "className": "",
+        "x": 580,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "gauge_t2_1",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "Temp caldera 2",
+        "group": "ui_group_temp_1",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "gtype": "gauge-half",
+        "title": "Temp Caldera 2",
+        "units": "\u00baC",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "60",
+                "color": "#ffc000",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "85",
+                "color": "#ff3300",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": 100,
+        "value": "payload",
+        "valueType": "msg",
+        "alwaysShowTitle": false,
+        "icon": "",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "className": "",
+        "x": 580,
+        "y": 140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "gauge_rpm_1",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "RPM Bomba",
+        "group": "ui_group_ctrl_1",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "gtype": "gauge-half",
+        "title": "RPM Actual",
+        "units": "rpm",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "1200",
+                "color": "#ffc000",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "1800",
+                "color": "#ff3300",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": 2000,
+        "value": "payload",
+        "valueType": "msg",
+        "alwaysShowTitle": false,
+        "icon": "",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "className": "",
+        "x": 580,
+        "y": 180,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "sw_em_1",
+        "type": "ui-switch",
+        "z": "tab_supervision_purdue",
+        "name": "Parada emergencia",
+        "label": "Parada Emergencia",
+        "group": "ui_group_ctrl_1",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "x": 370,
+        "y": 260,
+        "wires": [
+            [
+                "wr_em_1"
+            ]
+        ]
+    },
+    {
+        "id": "sw_pmp_1",
+        "type": "ui-switch",
+        "z": "tab_supervision_purdue",
+        "name": "Parada bomba",
+        "label": "Marcha/Paro Bomba",
+        "group": "ui_group_ctrl_1",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "x": 390,
+        "y": 320,
+        "wires": [
+            [
+                "wr_pmp_1"
+            ]
+        ]
+    },
+    {
+        "id": "sl_rpm_1",
+        "type": "ui-slider",
+        "z": "tab_supervision_purdue",
+        "name": "Ajuste rpm",
+        "label": "Consigna RPM",
+        "group": "ui_group_ctrl_1",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "min": 0,
+        "max": 2000,
+        "step": 50,
+        "passthru": false,
+        "outmost": "all",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 350,
+        "y": 380,
+        "wires": [
+            [
+                "wr_rpm_1"
+            ]
+        ]
+    },
+    {
+        "id": "wr_em_1",
+        "type": "modbus-write",
+        "z": "tab_supervision_purdue",
+        "name": "Escribir Parada MB 1",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "unitid": 1,
+        "dataType": "Coil",
+        "adr": 0,
+        "quantity": 1,
+        "server": "client_modbus_1",
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayQty": 0,
+        "x": 600,
+        "y": 260,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "wr_pmp_1",
+        "type": "modbus-write",
+        "z": "tab_supervision_purdue",
+        "name": "Escribir Bomba MB 1",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "unitid": 1,
+        "dataType": "Coil",
+        "adr": 1,
+        "quantity": 1,
+        "server": "client_modbus_1",
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayQty": 0,
+        "x": 600,
+        "y": 320,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "wr_rpm_1",
+        "type": "modbus-write",
+        "z": "tab_supervision_purdue",
+        "name": "Escribir RPM MB 1",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "unitid": 1,
+        "dataType": "HoldingRegister",
+        "adr": 20,
+        "quantity": 1,
+        "server": "client_modbus_1",
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayQty": 0,
+        "x": 600,
+        "y": 380,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "client_modbus_2",
+        "type": "modbus-client",
+        "name": "PLC_Agua_2",
+        "clienttype": "tcp",
+        "tcpHost": "192.168.10.11",
+        "tcpPort": 502,
+        "tcpType": "DEFAULT",
+        "listenType": "multiple",
+        "unit_id": 2,
+        "commandDelay": 1,
+        "clientTimeout": 2000,
+        "reconnectOnTimeout": true,
+        "reconnectTimeout": 2000,
+        "parallelUnitIdsAllowed": false,
+        "showServerAddress": false,
+        "showWarnings": true,
+        "showErrors": true,
+        "enableMsgQueue": true,
+        "showLogQueue": false,
+        "queueLogParallelQueues": 1,
+        "bufferCommands": true,
+        "stateLogEnabled": false,
+        "queueLogEnabled": false,
+        "failureLogEnabled": true,
+        "logIOActivities": false,
+        "serialPort": "/dev/ttyUSB0",
+        "serialBaudrate": "9600",
+        "serialDatabits": "8",
+        "serialStopbits": "1",
+        "serialParity": "none",
+        "serialType": "RTU",
+        "serialConnectionDelay": "100"
+    },
+    {
+        "id": "ui_group_ctrl_2",
+        "type": "ui-group",
+        "name": "Controles PLC 2",
+        "page": "ui_page_planta",
+        "width": 6,
+        "height": 1,
+        "order": 1,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "ui_group_temp_2",
+        "type": "ui-group",
+        "name": "Temperaturas PLC 2",
+        "page": "ui_page_planta",
+        "width": 6,
+        "height": 1,
+        "order": 2,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "read_modbus_2",
+        "type": "modbus-read",
+        "z": "tab_supervision_purdue",
+        "name": "Leer Sensores MB 2",
+        "dataType": "HoldingRegister",
+        "adr": 0,
+        "quantity": 20,
+        "rate": 2,
+        "rateUnit": "s",
+        "server": "client_modbus_2",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "unitid": 2,
+        "useIOFile": false,
+        "ioFile": "",
+        "useIOForPayload": false,
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayQty": 0,
+        "x": 150,
+        "y": 720,
+        "wires": [
+            [
+                "func_split_2"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "func_split_2",
+        "type": "function",
+        "z": "tab_supervision_purdue",
+        "name": "Separar Datos 2",
+        "func": "return [{ payload: msg.payload[0] }, { payload: msg.payload[1] }, { payload: msg.payload[15] }];",
+        "outputs": 3,
+        "x": 360,
+        "y": 740,
+        "wires": [
+            [
+                "gauge_t1_2"
+            ],
+            [
+                "gauge_t2_2"
+            ],
+            [
+                "gauge_rpm_2"
+            ]
+        ]
+    },
+    {
+        "id": "gauge_t1_2",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "Temp caldera 1",
+        "group": "ui_group_temp_2",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "gtype": "gauge-half",
+        "title": "Temp Caldera 1",
+        "units": "\u00baC",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "60",
+                "color": "#ffc000",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "85",
+                "color": "#ff3300",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": 100,
+        "value": "payload",
+        "valueType": "msg",
+        "alwaysShowTitle": false,
+        "icon": "",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "className": "",
+        "x": 580,
+        "y": 700,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "gauge_t2_2",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "Temp caldera 2",
+        "group": "ui_group_temp_2",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "gtype": "gauge-half",
+        "title": "Temp Caldera 2",
+        "units": "\u00baC",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "60",
+                "color": "#ffc000",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "85",
+                "color": "#ff3300",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": 100,
+        "value": "payload",
+        "valueType": "msg",
+        "alwaysShowTitle": false,
+        "icon": "",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "className": "",
+        "x": 580,
+        "y": 740,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "gauge_rpm_2",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "RPM Bomba",
+        "group": "ui_group_ctrl_2",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "gtype": "gauge-half",
+        "title": "RPM Actual",
+        "units": "rpm",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "1200",
+                "color": "#ffc000",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "1800",
+                "color": "#ff3300",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": 2000,
+        "value": "payload",
+        "valueType": "msg",
+        "alwaysShowTitle": false,
+        "icon": "",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "className": "",
+        "x": 580,
+        "y": 780,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "sw_em_2",
+        "type": "ui-switch",
+        "z": "tab_supervision_purdue",
+        "name": "Parada emergencia",
+        "label": "Parada Emergencia",
+        "group": "ui_group_ctrl_2",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "x": 370,
+        "y": 860,
+        "wires": [
+            [
+                "wr_em_2"
+            ]
+        ]
+    },
+    {
+        "id": "sw_pmp_2",
+        "type": "ui-switch",
+        "z": "tab_supervision_purdue",
+        "name": "Parada bomba",
+        "label": "Marcha/Paro Bomba",
+        "group": "ui_group_ctrl_2",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "x": 390,
+        "y": 920,
+        "wires": [
+            [
+                "wr_pmp_2"
+            ]
+        ]
+    },
+    {
+        "id": "sl_rpm_2",
+        "type": "ui-slider",
+        "z": "tab_supervision_purdue",
+        "name": "Ajuste rpm",
+        "label": "Consigna RPM",
+        "group": "ui_group_ctrl_2",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "min": 0,
+        "max": 2000,
+        "step": 50,
+        "passthru": false,
+        "outmost": "all",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 350,
+        "y": 980,
+        "wires": [
+            [
+                "wr_rpm_2"
+            ]
+        ]
+    },
+    {
+        "id": "wr_em_2",
+        "type": "modbus-write",
+        "z": "tab_supervision_purdue",
+        "name": "Escribir Parada MB 2",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "unitid": 2,
+        "dataType": "Coil",
+        "adr": 0,
+        "quantity": 1,
+        "server": "client_modbus_2",
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayQty": 0,
+        "x": 600,
+        "y": 860,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "wr_pmp_2",
+        "type": "modbus-write",
+        "z": "tab_supervision_purdue",
+        "name": "Escribir Bomba MB 2",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "unitid": 2,
+        "dataType": "Coil",
+        "adr": 1,
+        "quantity": 1,
+        "server": "client_modbus_2",
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayQty": 0,
+        "x": 600,
+        "y": 920,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "wr_rpm_2",
+        "type": "modbus-write",
+        "z": "tab_supervision_purdue",
+        "name": "Escribir RPM MB 2",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "unitid": 2,
+        "dataType": "HoldingRegister",
+        "adr": 20,
+        "quantity": 1,
+        "server": "client_modbus_2",
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayQty": 0,
+        "x": 600,
+        "y": 980,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "client_modbus_3",
+        "type": "modbus-client",
+        "name": "PLC_Agua_3",
+        "clienttype": "tcp",
+        "tcpHost": "192.168.10.12",
+        "tcpPort": 502,
+        "tcpType": "DEFAULT",
+        "listenType": "multiple",
+        "unit_id": 3,
+        "commandDelay": 1,
+        "clientTimeout": 2000,
+        "reconnectOnTimeout": true,
+        "reconnectTimeout": 2000,
+        "parallelUnitIdsAllowed": false,
+        "showServerAddress": false,
+        "showWarnings": true,
+        "showErrors": true,
+        "enableMsgQueue": true,
+        "showLogQueue": false,
+        "queueLogParallelQueues": 1,
+        "bufferCommands": true,
+        "stateLogEnabled": false,
+        "queueLogEnabled": false,
+        "failureLogEnabled": true,
+        "logIOActivities": false,
+        "serialPort": "/dev/ttyUSB0",
+        "serialBaudrate": "9600",
+        "serialDatabits": "8",
+        "serialStopbits": "1",
+        "serialParity": "none",
+        "serialType": "RTU",
+        "serialConnectionDelay": "100"
+    },
+    {
+        "id": "ui_group_ctrl_3",
+        "type": "ui-group",
+        "name": "Controles PLC 3",
+        "page": "ui_page_planta",
+        "width": 6,
+        "height": 1,
+        "order": 1,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "ui_group_temp_3",
+        "type": "ui-group",
+        "name": "Temperaturas PLC 3",
+        "page": "ui_page_planta",
+        "width": 6,
+        "height": 1,
+        "order": 2,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "read_modbus_3",
+        "type": "modbus-read",
+        "z": "tab_supervision_purdue",
+        "name": "Leer Sensores MB 3",
+        "dataType": "HoldingRegister",
+        "adr": 0,
+        "quantity": 20,
+        "rate": 2,
+        "rateUnit": "s",
+        "server": "client_modbus_3",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "unitid": 3,
+        "useIOFile": false,
+        "ioFile": "",
+        "useIOForPayload": false,
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayQty": 0,
+        "x": 150,
+        "y": 1320,
+        "wires": [
+            [
+                "func_split_3"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "func_split_3",
+        "type": "function",
+        "z": "tab_supervision_purdue",
+        "name": "Separar Datos 3",
+        "func": "return [{ payload: msg.payload[0] }, { payload: msg.payload[1] }, { payload: msg.payload[15] }];",
+        "outputs": 3,
+        "x": 360,
+        "y": 1340,
+        "wires": [
+            [
+                "gauge_t1_3"
+            ],
+            [
+                "gauge_t2_3"
+            ],
+            [
+                "gauge_rpm_3"
+            ]
+        ]
+    },
+    {
+        "id": "gauge_t1_3",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "Temp caldera 1",
+        "group": "ui_group_temp_3",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "gtype": "gauge-half",
+        "title": "Temp Caldera 1",
+        "units": "\u00baC",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "60",
+                "color": "#ffc000",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "85",
+                "color": "#ff3300",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": 100,
+        "value": "payload",
+        "valueType": "msg",
+        "alwaysShowTitle": false,
+        "icon": "",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "className": "",
+        "x": 580,
+        "y": 1300,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "gauge_t2_3",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "Temp caldera 2",
+        "group": "ui_group_temp_3",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "gtype": "gauge-half",
+        "title": "Temp Caldera 2",
+        "units": "\u00baC",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "60",
+                "color": "#ffc000",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "85",
+                "color": "#ff3300",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": 100,
+        "value": "payload",
+        "valueType": "msg",
+        "alwaysShowTitle": false,
+        "icon": "",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "className": "",
+        "x": 580,
+        "y": 1340,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "gauge_rpm_3",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "RPM Bomba",
+        "group": "ui_group_ctrl_3",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "gtype": "gauge-half",
+        "title": "RPM Actual",
+        "units": "rpm",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "1200",
+                "color": "#ffc000",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "1800",
+                "color": "#ff3300",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": 2000,
+        "value": "payload",
+        "valueType": "msg",
+        "alwaysShowTitle": false,
+        "icon": "",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "className": "",
+        "x": 580,
+        "y": 1380,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "sw_em_3",
+        "type": "ui-switch",
+        "z": "tab_supervision_purdue",
+        "name": "Parada emergencia",
+        "label": "Parada Emergencia",
+        "group": "ui_group_ctrl_3",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "x": 370,
+        "y": 1460,
+        "wires": [
+            [
+                "wr_em_3"
+            ]
+        ]
+    },
+    {
+        "id": "sw_pmp_3",
+        "type": "ui-switch",
+        "z": "tab_supervision_purdue",
+        "name": "Parada bomba",
+        "label": "Marcha/Paro Bomba",
+        "group": "ui_group_ctrl_3",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "x": 390,
+        "y": 1520,
+        "wires": [
+            [
+                "wr_pmp_3"
+            ]
+        ]
+    },
+    {
+        "id": "sl_rpm_3",
+        "type": "ui-slider",
+        "z": "tab_supervision_purdue",
+        "name": "Ajuste rpm",
+        "label": "Consigna RPM",
+        "group": "ui_group_ctrl_3",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "min": 0,
+        "max": 2000,
+        "step": 50,
+        "passthru": false,
+        "outmost": "all",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 350,
+        "y": 1580,
+        "wires": [
+            [
+                "wr_rpm_3"
+            ]
+        ]
+    },
+    {
+        "id": "wr_em_3",
+        "type": "modbus-write",
+        "z": "tab_supervision_purdue",
+        "name": "Escribir Parada MB 3",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "unitid": 3,
+        "dataType": "Coil",
+        "adr": 0,
+        "quantity": 1,
+        "server": "client_modbus_3",
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayQty": 0,
+        "x": 600,
+        "y": 1460,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "wr_pmp_3",
+        "type": "modbus-write",
+        "z": "tab_supervision_purdue",
+        "name": "Escribir Bomba MB 3",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "unitid": 3,
+        "dataType": "Coil",
+        "adr": 1,
+        "quantity": 1,
+        "server": "client_modbus_3",
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayQty": 0,
+        "x": 600,
+        "y": 1520,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "wr_rpm_3",
+        "type": "modbus-write",
+        "z": "tab_supervision_purdue",
+        "name": "Escribir RPM MB 3",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "unitid": 3,
+        "dataType": "HoldingRegister",
+        "adr": 20,
+        "quantity": 1,
+        "server": "client_modbus_3",
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayQty": 0,
+        "x": 600,
+        "y": 1580,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "s7_endpoint_1",
+        "type": "s7 endpoint",
+        "transport": "iso-on-tcp",
+        "address": "192.168.30.10",
+        "port": "102",
+        "rack": "0",
+        "slot": "1",
+        "localtsaphi": "01",
+        "localtsaplo": "00",
+        "remotetsaphi": "01",
+        "remotetsaplo": "00",
+        "connmode": "rack-slot",
+        "adapter": "",
+        "busaddr": 2,
+        "cycletime": 1000,
+        "timeout": 2000,
+        "name": "PLC_S7_1",
+        "vartable": [
+            {
+                "addr": "DB1,INT0",
+                "name": "Temp"
+            },
+            {
+                "addr": "DB1,INT2",
+                "name": "Presion"
+            },
+            {
+                "addr": "DB1,X4.0",
+                "name": "Marcha"
+            },
+            {
+                "addr": "DB1,X4.1",
+                "name": "Parada"
+            },
+            {
+                "addr": "DB1,REAL6",
+                "name": "Setpoint"
+            }
+        ]
+    },
+    {
+        "id": "ui_group_ctrl_s7_1",
+        "type": "ui-group",
+        "name": "Control Motor S7 (1)",
+        "page": "ui_page_s7",
+        "width": 6,
+        "height": 0,
+        "order": 1,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "ui_group_tele_s7_1",
+        "type": "ui-group",
+        "name": "Telemetr\u00eda S7 (1)",
+        "page": "ui_page_s7",
+        "width": 6,
+        "height": 0,
+        "order": 2,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "read_s7_temp_1",
+        "type": "s7 in",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_1",
+        "mode": "single",
+        "variable": "Temp",
+        "diff": false,
+        "name": "Leer Temp S7 1",
+        "x": 180,
+        "y": 1880,
+        "wires": [
+            [
+                "gauge_s7_temp_1"
+            ]
+        ]
+    },
+    {
+        "id": "read_s7_pres_1",
+        "type": "s7 in",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_1",
+        "mode": "single",
+        "variable": "Presion",
+        "diff": false,
+        "name": "Leer Pres S7 1",
+        "x": 180,
+        "y": 1940,
+        "wires": [
+            [
+                "gauge_s7_pres_1"
+            ]
+        ]
+    },
+    {
+        "id": "read_s7_run_1",
+        "type": "s7 in",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_1",
+        "mode": "single",
+        "variable": "Marcha",
+        "diff": false,
+        "name": "Leer Marcha S7 1",
+        "x": 180,
+        "y": 2000,
+        "wires": [
+            [
+                "text_s7_run_1"
+            ]
+        ]
+    },
+    {
+        "id": "gauge_s7_temp_1",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "temp",
+        "group": "ui_group_tele_s7_1",
+        "order": 1,
+        "value": "payload",
+        "valueType": "msg",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Temperatura",
+        "units": "\u00baC",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "60",
+                "color": "#ffc800",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "80",
+                "color": "#ea5353",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": "100",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "x": 420,
+        "y": 1880,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "gauge_s7_pres_1",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "Presion",
+        "group": "ui_group_tele_s7_1",
+        "order": 2,
+        "value": "payload",
+        "valueType": "msg",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Presi\u00f3n",
+        "units": "bar",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "120",
+                "color": "#ffc800",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "160",
+                "color": "#ea5353",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": "200",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "x": 420,
+        "y": 1940,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "text_s7_run_1",
+        "type": "ui-text",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_tele_s7_1",
+        "order": 3,
+        "name": "Estado motor",
+        "label": "Estado motor",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "fontSize": 16,
+        "color": "#717171",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 420,
+        "y": 2000,
+        "wires": []
+    },
+    {
+        "id": "btn_s7_em_1",
+        "type": "ui-button",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_ctrl_s7_1",
+        "name": "Control Parada Emergencia",
+        "label": "Bot\u00f3n parada de emergencia",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "emulateClick": false,
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "iconPosition": "left",
+        "payload": "true",
+        "payloadType": "bool",
+        "topic": "topic",
+        "topicType": "msg",
+        "buttonColor": "",
+        "textColor": "",
+        "iconColor": "",
+        "enableClick": true,
+        "enablePointerdown": false,
+        "pointerdownPayload": "",
+        "pointerdownPayloadType": "str",
+        "enablePointerup": false,
+        "pointerupPayload": "",
+        "pointerupPayloadType": "str",
+        "x": 160,
+        "y": 2100,
+        "wires": [
+            [
+                "out_s7_em_1"
+            ]
+        ]
+    },
+    {
+        "id": "sw_s7_run_1",
+        "type": "ui-switch",
+        "z": "tab_supervision_purdue",
+        "name": "Control Marcha",
+        "label": "Marcha",
+        "group": "ui_group_ctrl_s7_1",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "decouple": false,
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "className": "",
+        "layout": "row-spread",
+        "clickableArea": "switch",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "x": 180,
+        "y": 2160,
+        "wires": [
+            [
+                "out_s7_run_1"
+            ]
+        ]
+    },
+    {
+        "id": "slider_s7_sp_1",
+        "type": "ui-slider",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_ctrl_s7_1",
+        "name": "Control Setpoint",
+        "label": "Control Setpoint",
+        "tooltip": "",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "outs": "all",
+        "topic": "topic",
+        "topicType": "msg",
+        "thumbLabel": "true",
+        "showTicks": "always",
+        "min": 0,
+        "max": "60",
+        "step": "5",
+        "className": "",
+        "iconPrepend": "",
+        "iconAppend": "",
+        "color": "",
+        "colorTrack": "",
+        "colorThumb": "",
+        "showTextField": false,
+        "x": 180,
+        "y": 2220,
+        "wires": [
+            [
+                "out_s7_sp_1"
+            ]
+        ]
+    },
+    {
+        "id": "out_s7_em_1",
+        "type": "s7 out",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_1",
+        "variable": "Parada",
+        "name": "Escribir Parada 1",
+        "x": 440,
+        "y": 2100,
+        "wires": []
+    },
+    {
+        "id": "out_s7_run_1",
+        "type": "s7 out",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_1",
+        "variable": "Marcha",
+        "name": "Escribir Marcha 1",
+        "x": 440,
+        "y": 2160,
+        "wires": []
+    },
+    {
+        "id": "out_s7_sp_1",
+        "type": "s7 out",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_1",
+        "variable": "Setpoint",
+        "name": "Escribir Setpoint 1",
+        "x": 440,
+        "y": 2220,
+        "wires": []
+    },
+    {
+        "id": "s7_endpoint_2",
+        "type": "s7 endpoint",
+        "transport": "iso-on-tcp",
+        "address": "192.168.30.11",
+        "port": "102",
+        "rack": "0",
+        "slot": "1",
+        "localtsaphi": "01",
+        "localtsaplo": "00",
+        "remotetsaphi": "01",
+        "remotetsaplo": "00",
+        "connmode": "rack-slot",
+        "adapter": "",
+        "busaddr": 2,
+        "cycletime": 1000,
+        "timeout": 2000,
+        "name": "PLC_S7_2",
+        "vartable": [
+            {
+                "addr": "DB1,INT0",
+                "name": "Temp"
+            },
+            {
+                "addr": "DB1,INT2",
+                "name": "Presion"
+            },
+            {
+                "addr": "DB1,X4.0",
+                "name": "Marcha"
+            },
+            {
+                "addr": "DB1,X4.1",
+                "name": "Parada"
+            },
+            {
+                "addr": "DB1,REAL6",
+                "name": "Setpoint"
+            }
+        ]
+    },
+    {
+        "id": "ui_group_ctrl_s7_2",
+        "type": "ui-group",
+        "name": "Control Motor S7 (2)",
+        "page": "ui_page_s7",
+        "width": 6,
+        "height": 0,
+        "order": 1,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "ui_group_tele_s7_2",
+        "type": "ui-group",
+        "name": "Telemetr\u00eda S7 (2)",
+        "page": "ui_page_s7",
+        "width": 6,
+        "height": 0,
+        "order": 2,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "read_s7_temp_2",
+        "type": "s7 in",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_2",
+        "mode": "single",
+        "variable": "Temp",
+        "diff": false,
+        "name": "Leer Temp S7 2",
+        "x": 180,
+        "y": 2480,
+        "wires": [
+            [
+                "gauge_s7_temp_2"
+            ]
+        ]
+    },
+    {
+        "id": "read_s7_pres_2",
+        "type": "s7 in",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_2",
+        "mode": "single",
+        "variable": "Presion",
+        "diff": false,
+        "name": "Leer Pres S7 2",
+        "x": 180,
+        "y": 2540,
+        "wires": [
+            [
+                "gauge_s7_pres_2"
+            ]
+        ]
+    },
+    {
+        "id": "read_s7_run_2",
+        "type": "s7 in",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_2",
+        "mode": "single",
+        "variable": "Marcha",
+        "diff": false,
+        "name": "Leer Marcha S7 2",
+        "x": 180,
+        "y": 2600,
+        "wires": [
+            [
+                "text_s7_run_2"
+            ]
+        ]
+    },
+    {
+        "id": "gauge_s7_temp_2",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "temp",
+        "group": "ui_group_tele_s7_2",
+        "order": 1,
+        "value": "payload",
+        "valueType": "msg",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Temperatura",
+        "units": "\u00baC",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "60",
+                "color": "#ffc800",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "80",
+                "color": "#ea5353",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": "100",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "x": 420,
+        "y": 2480,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "gauge_s7_pres_2",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "Presion",
+        "group": "ui_group_tele_s7_2",
+        "order": 2,
+        "value": "payload",
+        "valueType": "msg",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Presi\u00f3n",
+        "units": "bar",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "120",
+                "color": "#ffc800",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "160",
+                "color": "#ea5353",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": "200",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "x": 420,
+        "y": 2540,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "text_s7_run_2",
+        "type": "ui-text",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_tele_s7_2",
+        "order": 3,
+        "name": "Estado motor",
+        "label": "Estado motor",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "fontSize": 16,
+        "color": "#717171",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 420,
+        "y": 2600,
+        "wires": []
+    },
+    {
+        "id": "btn_s7_em_2",
+        "type": "ui-button",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_ctrl_s7_2",
+        "name": "Control Parada Emergencia",
+        "label": "Bot\u00f3n parada de emergencia",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "emulateClick": false,
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "iconPosition": "left",
+        "payload": "true",
+        "payloadType": "bool",
+        "topic": "topic",
+        "topicType": "msg",
+        "buttonColor": "",
+        "textColor": "",
+        "iconColor": "",
+        "enableClick": true,
+        "enablePointerdown": false,
+        "pointerdownPayload": "",
+        "pointerdownPayloadType": "str",
+        "enablePointerup": false,
+        "pointerupPayload": "",
+        "pointerupPayloadType": "str",
+        "x": 160,
+        "y": 2700,
+        "wires": [
+            [
+                "out_s7_em_2"
+            ]
+        ]
+    },
+    {
+        "id": "sw_s7_run_2",
+        "type": "ui-switch",
+        "z": "tab_supervision_purdue",
+        "name": "Control Marcha",
+        "label": "Marcha",
+        "group": "ui_group_ctrl_s7_2",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "decouple": false,
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "className": "",
+        "layout": "row-spread",
+        "clickableArea": "switch",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "x": 180,
+        "y": 2760,
+        "wires": [
+            [
+                "out_s7_run_2"
+            ]
+        ]
+    },
+    {
+        "id": "slider_s7_sp_2",
+        "type": "ui-slider",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_ctrl_s7_2",
+        "name": "Control Setpoint",
+        "label": "Control Setpoint",
+        "tooltip": "",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "outs": "all",
+        "topic": "topic",
+        "topicType": "msg",
+        "thumbLabel": "true",
+        "showTicks": "always",
+        "min": 0,
+        "max": "60",
+        "step": "5",
+        "className": "",
+        "iconPrepend": "",
+        "iconAppend": "",
+        "color": "",
+        "colorTrack": "",
+        "colorThumb": "",
+        "showTextField": false,
+        "x": 180,
+        "y": 2820,
+        "wires": [
+            [
+                "out_s7_sp_2"
+            ]
+        ]
+    },
+    {
+        "id": "out_s7_em_2",
+        "type": "s7 out",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_2",
+        "variable": "Parada",
+        "name": "Escribir Parada 2",
+        "x": 440,
+        "y": 2700,
+        "wires": []
+    },
+    {
+        "id": "out_s7_run_2",
+        "type": "s7 out",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_2",
+        "variable": "Marcha",
+        "name": "Escribir Marcha 2",
+        "x": 440,
+        "y": 2760,
+        "wires": []
+    },
+    {
+        "id": "out_s7_sp_2",
+        "type": "s7 out",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_2",
+        "variable": "Setpoint",
+        "name": "Escribir Setpoint 2",
+        "x": 440,
+        "y": 2820,
+        "wires": []
+    },
+    {
+        "id": "s7_endpoint_3",
+        "type": "s7 endpoint",
+        "transport": "iso-on-tcp",
+        "address": "192.168.30.12",
+        "port": "102",
+        "rack": "0",
+        "slot": "1",
+        "localtsaphi": "01",
+        "localtsaplo": "00",
+        "remotetsaphi": "01",
+        "remotetsaplo": "00",
+        "connmode": "rack-slot",
+        "adapter": "",
+        "busaddr": 2,
+        "cycletime": 1000,
+        "timeout": 2000,
+        "name": "PLC_S7_3",
+        "vartable": [
+            {
+                "addr": "DB1,INT0",
+                "name": "Temp"
+            },
+            {
+                "addr": "DB1,INT2",
+                "name": "Presion"
+            },
+            {
+                "addr": "DB1,X4.0",
+                "name": "Marcha"
+            },
+            {
+                "addr": "DB1,X4.1",
+                "name": "Parada"
+            },
+            {
+                "addr": "DB1,REAL6",
+                "name": "Setpoint"
+            }
+        ]
+    },
+    {
+        "id": "ui_group_ctrl_s7_3",
+        "type": "ui-group",
+        "name": "Control Motor S7 (3)",
+        "page": "ui_page_s7",
+        "width": 6,
+        "height": 0,
+        "order": 1,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "ui_group_tele_s7_3",
+        "type": "ui-group",
+        "name": "Telemetr\u00eda S7 (3)",
+        "page": "ui_page_s7",
+        "width": 6,
+        "height": 0,
+        "order": 2,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "read_s7_temp_3",
+        "type": "s7 in",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_3",
+        "mode": "single",
+        "variable": "Temp",
+        "diff": false,
+        "name": "Leer Temp S7 3",
+        "x": 180,
+        "y": 3080,
+        "wires": [
+            [
+                "gauge_s7_temp_3"
+            ]
+        ]
+    },
+    {
+        "id": "read_s7_pres_3",
+        "type": "s7 in",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_3",
+        "mode": "single",
+        "variable": "Presion",
+        "diff": false,
+        "name": "Leer Pres S7 3",
+        "x": 180,
+        "y": 3140,
+        "wires": [
+            [
+                "gauge_s7_pres_3"
+            ]
+        ]
+    },
+    {
+        "id": "read_s7_run_3",
+        "type": "s7 in",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_3",
+        "mode": "single",
+        "variable": "Marcha",
+        "diff": false,
+        "name": "Leer Marcha S7 3",
+        "x": 180,
+        "y": 3200,
+        "wires": [
+            [
+                "text_s7_run_3"
+            ]
+        ]
+    },
+    {
+        "id": "gauge_s7_temp_3",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "temp",
+        "group": "ui_group_tele_s7_3",
+        "order": 1,
+        "value": "payload",
+        "valueType": "msg",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Temperatura",
+        "units": "\u00baC",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "60",
+                "color": "#ffc800",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "80",
+                "color": "#ea5353",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": "100",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "x": 420,
+        "y": 3080,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "gauge_s7_pres_3",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "Presion",
+        "group": "ui_group_tele_s7_3",
+        "order": 2,
+        "value": "payload",
+        "valueType": "msg",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Presi\u00f3n",
+        "units": "bar",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "120",
+                "color": "#ffc800",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "160",
+                "color": "#ea5353",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": "200",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "x": 420,
+        "y": 3140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "text_s7_run_3",
+        "type": "ui-text",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_tele_s7_3",
+        "order": 3,
+        "name": "Estado motor",
+        "label": "Estado motor",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "fontSize": 16,
+        "color": "#717171",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 420,
+        "y": 3200,
+        "wires": []
+    },
+    {
+        "id": "btn_s7_em_3",
+        "type": "ui-button",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_ctrl_s7_3",
+        "name": "Control Parada Emergencia",
+        "label": "Bot\u00f3n parada de emergencia",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "emulateClick": false,
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "iconPosition": "left",
+        "payload": "true",
+        "payloadType": "bool",
+        "topic": "topic",
+        "topicType": "msg",
+        "buttonColor": "",
+        "textColor": "",
+        "iconColor": "",
+        "enableClick": true,
+        "enablePointerdown": false,
+        "pointerdownPayload": "",
+        "pointerdownPayloadType": "str",
+        "enablePointerup": false,
+        "pointerupPayload": "",
+        "pointerupPayloadType": "str",
+        "x": 160,
+        "y": 3300,
+        "wires": [
+            [
+                "out_s7_em_3"
+            ]
+        ]
+    },
+    {
+        "id": "sw_s7_run_3",
+        "type": "ui-switch",
+        "z": "tab_supervision_purdue",
+        "name": "Control Marcha",
+        "label": "Marcha",
+        "group": "ui_group_ctrl_s7_3",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "decouple": false,
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "className": "",
+        "layout": "row-spread",
+        "clickableArea": "switch",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "x": 180,
+        "y": 3360,
+        "wires": [
+            [
+                "out_s7_run_3"
+            ]
+        ]
+    },
+    {
+        "id": "slider_s7_sp_3",
+        "type": "ui-slider",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_ctrl_s7_3",
+        "name": "Control Setpoint",
+        "label": "Control Setpoint",
+        "tooltip": "",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "outs": "all",
+        "topic": "topic",
+        "topicType": "msg",
+        "thumbLabel": "true",
+        "showTicks": "always",
+        "min": 0,
+        "max": "60",
+        "step": "5",
+        "className": "",
+        "iconPrepend": "",
+        "iconAppend": "",
+        "color": "",
+        "colorTrack": "",
+        "colorThumb": "",
+        "showTextField": false,
+        "x": 180,
+        "y": 3420,
+        "wires": [
+            [
+                "out_s7_sp_3"
+            ]
+        ]
+    },
+    {
+        "id": "out_s7_em_3",
+        "type": "s7 out",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_3",
+        "variable": "Parada",
+        "name": "Escribir Parada 3",
+        "x": 440,
+        "y": 3300,
+        "wires": []
+    },
+    {
+        "id": "out_s7_run_3",
+        "type": "s7 out",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_3",
+        "variable": "Marcha",
+        "name": "Escribir Marcha 3",
+        "x": 440,
+        "y": 3360,
+        "wires": []
+    },
+    {
+        "id": "out_s7_sp_3",
+        "type": "s7 out",
+        "z": "tab_supervision_purdue",
+        "endpoint": "s7_endpoint_3",
+        "variable": "Setpoint",
+        "name": "Escribir Setpoint 3",
+        "x": 440,
+        "y": 3420,
+        "wires": []
+    },
+    {
+        "id": "mqtt_broker_local",
+        "type": "mqtt-broker",
+        "name": "Mosquitto (Gateway DNP3)",
+        "broker": "192.168.20.15",
+        "port": "1883",
+        "clientid": "NodeRED_SCADA",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 15,
+        "cleansession": true
+    },
+    {
+        "id": "ui_page_dnp3",
+        "type": "ui-page",
+        "name": "Planta DNP3",
+        "ui": "ui_base_dashboard",
+        "path": "/page3",
+        "icon": "home",
+        "layout": "grid",
+        "theme": "ui_theme_default",
+        "order": 3,
+        "className": "",
+        "visible": "true",
+        "disabled": "false"
+    },
+    {
+        "id": "ui_group_tele_dnp3_1",
+        "type": "ui-group",
+        "name": "Telemetr\u00eda DNP3 1",
+        "page": "ui_page_dnp3",
+        "width": 6,
+        "height": 1,
+        "order": 1,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "ui_group_ctrl_dnp3_1",
+        "type": "ui-group",
+        "name": "Control DNP3 1",
+        "page": "ui_page_dnp3",
+        "width": 6,
+        "height": 1,
+        "order": 2,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "mqtt_in_dnp3_1",
+        "type": "mqtt in",
+        "z": "tab_supervision_purdue",
+        "name": "Telemetr\u00eda DNP3 1",
+        "topic": "scada/dnp3/1/telemetria",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "mqtt_broker_local",
+        "x": 210,
+        "y": 3680,
+        "wires": [
+            [
+                "func_dnp3_1"
+            ]
+        ]
+    },
+    {
+        "id": "func_dnp3_1",
+        "type": "function",
+        "z": "tab_supervision_purdue",
+        "name": "Procesar DNP3 1",
+        "func": "var d = msg.payload || {};\n\nreturn [\n    { payload: d.bomba_principal ? \"ENCENDIDO\" : \"APAGADO\" },\n    { payload: d.alarma_sobrepresion ? \"\u00a1ALARMA!\" : \"NORMAL\" },\n    { payload: d.modo_manual ? \"MANUAL\" : \"AUTOM\u00c1TICO\" },\n    { payload: d.cmd_bomba ? \"ACTIVADO\" : \"DESACTIVADO\" },\n    { payload: Number(d.temp_caldera_1 || 0) },\n    { payload: Number(d.temp_caldera_2 || 0) }\n];",
+        "outputs": 6,
+        "x": 620,
+        "y": 3680,
+        "wires": [
+            [
+                "txt_bomba_dnp3_1"
+            ],
+            [
+                "txt_alarma_dnp3_1"
+            ],
+            [
+                "txt_manual_dnp3_1"
+            ],
+            [
+                "txt_cmd_dnp3_1"
+            ],
+            [
+                "gauge_t1_dnp3_1"
+            ],
+            [
+                "gauge_t2_dnp3_1"
+            ]
+        ]
+    },
+    {
+        "id": "txt_bomba_dnp3_1",
+        "type": "ui-text",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_tele_dnp3_1",
+        "order": 3,
+        "name": "Estado bomba principal",
+        "label": "Bomba principal",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "fontSize": 16,
+        "color": "#717171",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 1130,
+        "y": 3640,
+        "wires": []
+    },
+    {
+        "id": "txt_alarma_dnp3_1",
+        "type": "ui-text",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_tele_dnp3_1",
+        "order": 5,
+        "name": "Estado alarma sobrepresi\u00f3n",
+        "label": "Alarma sobrepresi\u00f3n",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "fontSize": 16,
+        "color": "#717171",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 1140,
+        "y": 3700,
+        "wires": []
+    },
+    {
+        "id": "txt_manual_dnp3_1",
+        "type": "ui-text",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_tele_dnp3_1",
+        "order": 6,
+        "name": "Modo manual",
+        "label": "Modo manual",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "fontSize": 16,
+        "color": "#717171",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 1120,
+        "y": 3760,
+        "wires": []
+    },
+    {
+        "id": "txt_cmd_dnp3_1",
+        "type": "ui-text",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_tele_dnp3_1",
+        "order": 4,
+        "name": "Cambio manual bomba",
+        "label": "Cambio manual bomba",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "fontSize": 16,
+        "color": "#717171",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 1130,
+        "y": 3820,
+        "wires": []
+    },
+    {
+        "id": "gauge_t1_dnp3_1",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "Temperatura caldera 1",
+        "group": "ui_group_tele_dnp3_1",
+        "order": 1,
+        "value": "payload",
+        "valueType": "msg",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Temperatura caldera 1",
+        "min": 0,
+        "max": "100",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c"
+            },
+            {
+                "from": "50",
+                "color": "#ffc800"
+            },
+            {
+                "from": "75",
+                "color": "#ea5353"
+            }
+        ],
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "x": 1120,
+        "y": 3900,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "gauge_t2_dnp3_1",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "Temperatura caldera 2",
+        "group": "ui_group_tele_dnp3_1",
+        "order": 2,
+        "value": "payload",
+        "valueType": "msg",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Temperatura caldera 2",
+        "min": 0,
+        "max": "100",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c"
+            },
+            {
+                "from": "50",
+                "color": "#ffc800"
+            },
+            {
+                "from": "75",
+                "color": "#ea5353"
+            }
+        ],
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "x": 1140,
+        "y": 3960,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "sw_manual_dnp3_1",
+        "type": "ui-switch",
+        "z": "tab_supervision_purdue",
+        "name": "Activaci\u00f3n modo manual",
+        "label": "Modo Manual",
+        "group": "ui_group_ctrl_dnp3_1",
+        "order": 2,
+        "topic": "scada/dnp3/1/control/modo_manual",
+        "topicType": "str",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "x": 270,
+        "y": 4020,
+        "wires": [
+            [
+                "mqtt_out_dnp3_1"
+            ]
+        ]
+    },
+    {
+        "id": "sw_bomba_dnp3_1",
+        "type": "ui-switch",
+        "z": "tab_supervision_purdue",
+        "name": "Activaci\u00f3n bomba principal",
+        "label": "Bomba principal",
+        "group": "ui_group_ctrl_dnp3_1",
+        "order": 1,
+        "topic": "scada/dnp3/1/control/bomba_principal",
+        "topicType": "str",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "x": 280,
+        "y": 4080,
+        "wires": [
+            [
+                "mqtt_out_dnp3_1"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out_dnp3_1",
+        "type": "mqtt out",
+        "z": "tab_supervision_purdue",
+        "name": "Salida MQTT DNP3 1",
+        "broker": "mqtt_broker_local",
+        "x": 510,
+        "y": 4040,
+        "wires": []
+    },
+    {
+        "id": "ui_group_tele_dnp3_2",
+        "type": "ui-group",
+        "name": "Telemetr\u00eda DNP3 2",
+        "page": "ui_page_dnp3",
+        "width": 6,
+        "height": 1,
+        "order": 1,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "ui_group_ctrl_dnp3_2",
+        "type": "ui-group",
+        "name": "Control DNP3 2",
+        "page": "ui_page_dnp3",
+        "width": 6,
+        "height": 1,
+        "order": 2,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "mqtt_in_dnp3_2",
+        "type": "mqtt in",
+        "z": "tab_supervision_purdue",
+        "name": "Telemetr\u00eda DNP3 2",
+        "topic": "scada/dnp3/2/telemetria",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "mqtt_broker_local",
+        "x": 210,
+        "y": 4180,
+        "wires": [
+            [
+                "func_dnp3_2"
+            ]
+        ]
+    },
+    {
+        "id": "func_dnp3_2",
+        "type": "function",
+        "z": "tab_supervision_purdue",
+        "name": "Procesar DNP3 2",
+        "func": "var d = msg.payload || {};\n\nreturn [\n    { payload: d.bomba_principal ? \"ENCENDIDO\" : \"APAGADO\" },\n    { payload: d.alarma_sobrepresion ? \"\u00a1ALARMA!\" : \"NORMAL\" },\n    { payload: d.modo_manual ? \"MANUAL\" : \"AUTOM\u00c1TICO\" },\n    { payload: d.cmd_bomba ? \"ACTIVADO\" : \"DESACTIVADO\" },\n    { payload: Number(d.temp_caldera_1 || 0) },\n    { payload: Number(d.temp_caldera_2 || 0) }\n];",
+        "outputs": 6,
+        "x": 620,
+        "y": 4180,
+        "wires": [
+            [
+                "txt_bomba_dnp3_2"
+            ],
+            [
+                "txt_alarma_dnp3_2"
+            ],
+            [
+                "txt_manual_dnp3_2"
+            ],
+            [
+                "txt_cmd_dnp3_2"
+            ],
+            [
+                "gauge_t1_dnp3_2"
+            ],
+            [
+                "gauge_t2_dnp3_2"
+            ]
+        ]
+    },
+    {
+        "id": "txt_bomba_dnp3_2",
+        "type": "ui-text",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_tele_dnp3_2",
+        "order": 3,
+        "name": "Estado bomba principal",
+        "label": "Bomba principal",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "fontSize": 16,
+        "color": "#717171",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 1130,
+        "y": 4140,
+        "wires": []
+    },
+    {
+        "id": "txt_alarma_dnp3_2",
+        "type": "ui-text",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_tele_dnp3_2",
+        "order": 5,
+        "name": "Estado alarma sobrepresi\u00f3n",
+        "label": "Alarma sobrepresi\u00f3n",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "fontSize": 16,
+        "color": "#717171",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 1140,
+        "y": 4200,
+        "wires": []
+    },
+    {
+        "id": "txt_manual_dnp3_2",
+        "type": "ui-text",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_tele_dnp3_2",
+        "order": 6,
+        "name": "Modo manual",
+        "label": "Modo manual",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "fontSize": 16,
+        "color": "#717171",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 1120,
+        "y": 4260,
+        "wires": []
+    },
+    {
+        "id": "txt_cmd_dnp3_2",
+        "type": "ui-text",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_tele_dnp3_2",
+        "order": 4,
+        "name": "Cambio manual bomba",
+        "label": "Cambio manual bomba",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "fontSize": 16,
+        "color": "#717171",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 1130,
+        "y": 4320,
+        "wires": []
+    },
+    {
+        "id": "gauge_t1_dnp3_2",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "Temperatura caldera 1",
+        "group": "ui_group_tele_dnp3_2",
+        "order": 1,
+        "value": "payload",
+        "valueType": "msg",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Temperatura caldera 1",
+        "min": 0,
+        "max": "100",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c"
+            },
+            {
+                "from": "50",
+                "color": "#ffc800"
+            },
+            {
+                "from": "75",
+                "color": "#ea5353"
+            }
+        ],
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "x": 1120,
+        "y": 4400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "gauge_t2_dnp3_2",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "Temperatura caldera 2",
+        "group": "ui_group_tele_dnp3_2",
+        "order": 2,
+        "value": "payload",
+        "valueType": "msg",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Temperatura caldera 2",
+        "min": 0,
+        "max": "100",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c"
+            },
+            {
+                "from": "50",
+                "color": "#ffc800"
+            },
+            {
+                "from": "75",
+                "color": "#ea5353"
+            }
+        ],
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "x": 1140,
+        "y": 4460,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "sw_manual_dnp3_2",
+        "type": "ui-switch",
+        "z": "tab_supervision_purdue",
+        "name": "Activaci\u00f3n modo manual",
+        "label": "Modo Manual",
+        "group": "ui_group_ctrl_dnp3_2",
+        "order": 2,
+        "topic": "scada/dnp3/2/control/modo_manual",
+        "topicType": "str",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "x": 270,
+        "y": 4520,
+        "wires": [
+            [
+                "mqtt_out_dnp3_2"
+            ]
+        ]
+    },
+    {
+        "id": "sw_bomba_dnp3_2",
+        "type": "ui-switch",
+        "z": "tab_supervision_purdue",
+        "name": "Activaci\u00f3n bomba principal",
+        "label": "Bomba principal",
+        "group": "ui_group_ctrl_dnp3_2",
+        "order": 1,
+        "topic": "scada/dnp3/2/control/bomba_principal",
+        "topicType": "str",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "x": 280,
+        "y": 4580,
+        "wires": [
+            [
+                "mqtt_out_dnp3_2"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out_dnp3_2",
+        "type": "mqtt out",
+        "z": "tab_supervision_purdue",
+        "name": "Salida MQTT DNP3 2",
+        "broker": "mqtt_broker_local",
+        "x": 510,
+        "y": 4540,
+        "wires": []
+    },
+    {
+        "id": "ui_group_tele_dnp3_3",
+        "type": "ui-group",
+        "name": "Telemetr\u00eda DNP3 3",
+        "page": "ui_page_dnp3",
+        "width": 6,
+        "height": 1,
+        "order": 1,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "ui_group_ctrl_dnp3_3",
+        "type": "ui-group",
+        "name": "Control DNP3 3",
+        "page": "ui_page_dnp3",
+        "width": 6,
+        "height": 1,
+        "order": 2,
+        "showTitle": true,
+        "groupType": "default"
+    },
+    {
+        "id": "mqtt_in_dnp3_3",
+        "type": "mqtt in",
+        "z": "tab_supervision_purdue",
+        "name": "Telemetr\u00eda DNP3 3",
+        "topic": "scada/dnp3/3/telemetria",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "mqtt_broker_local",
+        "x": 210,
+        "y": 4680,
+        "wires": [
+            [
+                "func_dnp3_3"
+            ]
+        ]
+    },
+    {
+        "id": "func_dnp3_3",
+        "type": "function",
+        "z": "tab_supervision_purdue",
+        "name": "Procesar DNP3 3",
+        "func": "var d = msg.payload || {};\n\nreturn [\n    { payload: d.bomba_principal ? \"ENCENDIDO\" : \"APAGADO\" },\n    { payload: d.alarma_sobrepresion ? \"\u00a1ALARMA!\" : \"NORMAL\" },\n    { payload: d.modo_manual ? \"MANUAL\" : \"AUTOM\u00c1TICO\" },\n    { payload: d.cmd_bomba ? \"ACTIVADO\" : \"DESACTIVADO\" },\n    { payload: Number(d.temp_caldera_1 || 0) },\n    { payload: Number(d.temp_caldera_2 || 0) }\n];",
+        "outputs": 6,
+        "x": 620,
+        "y": 4680,
+        "wires": [
+            [
+                "txt_bomba_dnp3_3"
+            ],
+            [
+                "txt_alarma_dnp3_3"
+            ],
+            [
+                "txt_manual_dnp3_3"
+            ],
+            [
+                "txt_cmd_dnp3_3"
+            ],
+            [
+                "gauge_t1_dnp3_3"
+            ],
+            [
+                "gauge_t2_dnp3_3"
+            ]
+        ]
+    },
+    {
+        "id": "txt_bomba_dnp3_3",
+        "type": "ui-text",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_tele_dnp3_3",
+        "order": 3,
+        "name": "Estado bomba principal",
+        "label": "Bomba principal",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "fontSize": 16,
+        "color": "#717171",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 1130,
+        "y": 4640,
+        "wires": []
+    },
+    {
+        "id": "txt_alarma_dnp3_3",
+        "type": "ui-text",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_tele_dnp3_3",
+        "order": 5,
+        "name": "Estado alarma sobrepresi\u00f3n",
+        "label": "Alarma sobrepresi\u00f3n",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "fontSize": 16,
+        "color": "#717171",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 1140,
+        "y": 4700,
+        "wires": []
+    },
+    {
+        "id": "txt_manual_dnp3_3",
+        "type": "ui-text",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_tele_dnp3_3",
+        "order": 6,
+        "name": "Modo manual",
+        "label": "Modo manual",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "fontSize": 16,
+        "color": "#717171",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 1120,
+        "y": 4760,
+        "wires": []
+    },
+    {
+        "id": "txt_cmd_dnp3_3",
+        "type": "ui-text",
+        "z": "tab_supervision_purdue",
+        "group": "ui_group_tele_dnp3_3",
+        "order": 4,
+        "name": "Cambio manual bomba",
+        "label": "Cambio manual bomba",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "fontSize": 16,
+        "color": "#717171",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 1130,
+        "y": 4820,
+        "wires": []
+    },
+    {
+        "id": "gauge_t1_dnp3_3",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "Temperatura caldera 1",
+        "group": "ui_group_tele_dnp3_3",
+        "order": 1,
+        "value": "payload",
+        "valueType": "msg",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Temperatura caldera 1",
+        "min": 0,
+        "max": "100",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c"
+            },
+            {
+                "from": "50",
+                "color": "#ffc800"
+            },
+            {
+                "from": "75",
+                "color": "#ea5353"
+            }
+        ],
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "x": 1120,
+        "y": 4900,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "gauge_t2_dnp3_3",
+        "type": "ui-gauge",
+        "z": "tab_supervision_purdue",
+        "name": "Temperatura caldera 2",
+        "group": "ui_group_tele_dnp3_3",
+        "order": 2,
+        "value": "payload",
+        "valueType": "msg",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Temperatura caldera 2",
+        "min": 0,
+        "max": "100",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c"
+            },
+            {
+                "from": "50",
+                "color": "#ffc800"
+            },
+            {
+                "from": "75",
+                "color": "#ea5353"
+            }
+        ],
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "x": 1140,
+        "y": 4960,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "sw_manual_dnp3_3",
+        "type": "ui-switch",
+        "z": "tab_supervision_purdue",
+        "name": "Activaci\u00f3n modo manual",
+        "label": "Modo Manual",
+        "group": "ui_group_ctrl_dnp3_3",
+        "order": 2,
+        "topic": "scada/dnp3/3/control/modo_manual",
+        "topicType": "str",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "x": 270,
+        "y": 5020,
+        "wires": [
+            [
+                "mqtt_out_dnp3_3"
+            ]
+        ]
+    },
+    {
+        "id": "sw_bomba_dnp3_3",
+        "type": "ui-switch",
+        "z": "tab_supervision_purdue",
+        "name": "Activaci\u00f3n bomba principal",
+        "label": "Bomba principal",
+        "group": "ui_group_ctrl_dnp3_3",
+        "order": 1,
+        "topic": "scada/dnp3/3/control/bomba_principal",
+        "topicType": "str",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "x": 280,
+        "y": 5080,
+        "wires": [
+            [
+                "mqtt_out_dnp3_3"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out_dnp3_3",
+        "type": "mqtt out",
+        "z": "tab_supervision_purdue",
+        "name": "Salida MQTT DNP3 3",
+        "broker": "mqtt_broker_local",
+        "x": 510,
+        "y": 5040,
+        "wires": []
+    },
+    {
+        "id": "global_config_modules",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-contrib-modbus": "5.60.2",
+            "node-red-contrib-s7": "3.1.3",
+            "@flowfuse/node-red-dashboard": "1.32.0"
+        }
+    }
+]
