@@ -1,12 +1,46 @@
+# ---------------------------------------------------------------
 # Cache y temporales de Python
+# ---------------------------------------------------------------
 __pycache__/
 *.pyc
+*.pyo
 
-# Archivos y datos generados dinámicamente
+# ---------------------------------------------------------------
+# Archivos y datos generados dinámicamente por main.py
+# ---------------------------------------------------------------
 docker-compose.generated.yml
+mosquitto.conf
 nodered_data*/
+openplc/acl_plc_agua_*.conf
+ataques/.mode
 
+# ---------------------------------------------------------------
+# Datos sensibles del laboratorio (claves SSH, artefactos descargados)
+# NUNCA subir a GitHub.
+# ---------------------------------------------------------------
+recurso_compartido/
+ataques/work/
+
+# ---------------------------------------------------------------
+# Salidas de ejecución del toolkit de ataques (ruidoso, timestamp)
+# ---------------------------------------------------------------
+ataques/evidencias/
+ataques/resource_scripts/
+
+# ---------------------------------------------------------------
+# Capturas y datasets pesados de laboratorio
+# ---------------------------------------------------------------
+*.pcap
+*.csv
+
+# ---------------------------------------------------------------
+# Escenario antiguo (contiene node_modules, no se usa en la versión actual)
+# ---------------------------------------------------------------
+escenario antiguo/
+
+# ---------------------------------------------------------------
 # Archivos de entorno y editores
+# ---------------------------------------------------------------
 .env
 .vscode/
 .idea/
