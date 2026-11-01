@@ -1,0 +1,48 @@
+[1 - Suricata-Main] 2026-10-16 11:37:34 Notice: suricata: This is Suricata version 8.0.7 RELEASE running in USER mode
+[1 - Suricata-Main] 2026-10-16 11:37:34 Info: cpu: CPUs/cores online: 20
+[1 - Suricata-Main] 2026-10-16 11:37:34 Info: suricata: Setting engine mode to IDS mode by default
+[1 - Suricata-Main] 2026-10-16 11:37:34 Info: suricata: No 'host-mode': suricata is in IDS mode, using default setting 'sniffer-only'
+[1 - Suricata-Main] 2026-10-16 11:37:34 Notice: stream-tcp: stream.reassembly.depth set to unlimited by default
+[1 - Suricata-Main] 2026-10-16 11:37:34 Info: logopenfile: eve-log output device (regular) initialized: eve.json
+[1 - Suricata-Main] 2026-10-16 11:37:34 Info: detect: 1 rule files processed. 22 rules successfully loaded, 0 rules failed, 0 rules skipped
+[1 - Suricata-Main] 2026-10-16 11:37:34 Info: threshold-config: Threshold config parsed: 0 rule(s) found
+[1 - Suricata-Main] 2026-10-16 11:37:34 Info: detect: 22 signatures processed. 2 are IP-only rules, 1 are inspecting packet payload, 13 inspect application layer, 0 are decoder event only
+[12 - RX#01] 2026-10-16 11:37:35 Info: pcap: Starting file run for /pcaps/baseline_mqtt-20261016-114414.pcap
+[1 - Suricata-Main] 2026-10-16 11:37:35 Notice: threads: Threads created -> RX: 1 W: 20 FM: 1 FR: 1   Engine started.
+[12 - RX#01] 2026-10-16 11:37:35 Info: pcap: pcap file /pcaps/baseline_mqtt-20261016-114414.pcap end of file reached (pcap err code 0)
+[1 - Suricata-Main] 2026-10-16 11:37:35 Notice: suricata: Signal Received.  Stopping engine.
+[1 - Suricata-Main] 2026-10-16 11:37:35 Info: suricata: time elapsed 0.219s
+[12 - RX#01] 2026-10-16 11:37:35 Notice: pcap: read 1 file, 81180 packets, 12723324 bytes
+[1 - Suricata-Main] 2026-10-16 11:37:35 Info: counters: Alerts: 0
+[1 - Suricata-Main] 2026-10-16 23:01:54 Notice: suricata: This is Suricata version 8.0.7 RELEASE running in USER mode
+[1 - Suricata-Main] 2026-10-16 23:01:54 Info: cpu: CPUs/cores online: 20
+[1 - Suricata-Main] 2026-10-16 23:01:54 Info: suricata: Setting engine mode to IDS mode by default
+[1 - Suricata-Main] 2026-10-16 23:01:55 Info: suricata: No 'host-mode': suricata is in IDS mode, using default setting 'sniffer-only'
+[1 - Suricata-Main] 2026-10-16 23:01:55 Notice: stream-tcp: stream.reassembly.depth set to unlimited by default
+[1 - Suricata-Main] 2026-10-16 23:01:55 Info: logopenfile: eve-log output device (regular) initialized: eve.json
+[1 - Suricata-Main] 2026-10-16 23:01:55 Info: detect: 1 rule files processed. 22 rules successfully loaded, 0 rules failed, 0 rules skipped
+[1 - Suricata-Main] 2026-10-16 23:01:55 Info: threshold-config: Threshold config parsed: 0 rule(s) found
+[1 - Suricata-Main] 2026-10-16 23:01:55 Info: detect: 22 signatures processed. 2 are IP-only rules, 1 are inspecting packet payload, 13 inspect application layer, 0 are decoder event only
+[12 - RX#01] 2026-10-16 23:01:55 Info: pcap: Starting file run for /pcaps/baseline_mqtt-20261016-114414.pcap
+[1 - Suricata-Main] 2026-10-16 23:01:55 Notice: threads: Threads created -> RX: 1 W: 20 FM: 1 FR: 1   Engine started.
+[12 - RX#01] 2026-10-16 23:01:55 Info: pcap: pcap file /pcaps/baseline_mqtt-20261016-114414.pcap end of file reached (pcap err code 0)
+[1 - Suricata-Main] 2026-10-16 23:01:55 Notice: suricata: Signal Received.  Stopping engine.
+[1 - Suricata-Main] 2026-10-16 23:01:55 Info: suricata: time elapsed 0.392s
+[12 - RX#01] 2026-10-16 23:01:55 Notice: pcap: read 1 file, 81180 packets, 12723324 bytes
+[1 - Suricata-Main] 2026-10-16 23:01:55 Info: counters: Alerts: 0
+[1 - Suricata-Main] 2026-10-17 20:52:11 Notice: suricata: This is Suricata version 8.0.7 RELEASE running in USER mode
+[1 - Suricata-Main] 2026-10-17 20:52:11 Info: cpu: CPUs/cores online: 20
+[1 - Suricata-Main] 2026-10-17 20:52:11 Info: suricata: Setting engine mode to IDS mode by default
+[1 - Suricata-Main] 2026-10-17 20:52:11 Info: suricata: No 'host-mode': suricata is in IDS mode, using default setting 'sniffer-only'
+[1 - Suricata-Main] 2026-10-17 20:52:11 Notice: stream-tcp: stream.reassembly.depth set to unlimited by default
+[1 - Suricata-Main] 2026-10-17 20:52:11 Info: logopenfile: eve-log output device (regular) initialized: eve.json
+[1 - Suricata-Main] 2026-10-17 20:52:11 Info: detect: 1 rule files processed. 22 rules successfully loaded, 0 rules failed, 0 rules skipped
+[1 - Suricata-Main] 2026-10-17 20:52:11 Info: threshold-config: Threshold config parsed: 0 rule(s) found
+[1 - Suricata-Main] 2026-10-17 20:52:11 Info: detect: 22 signatures processed. 2 are IP-only rules, 1 are inspecting packet payload, 13 inspect application layer, 0 are decoder event only
+[12 - RX#01] 2026-10-17 20:52:11 Info: pcap: Starting file run for /pcaps/baseline_mqtt-20261016-114414.pcap
+[1 - Suricata-Main] 2026-10-17 20:52:11 Notice: threads: Threads created -> RX: 1 W: 20 FM: 1 FR: 1   Engine started.
+[12 - RX#01] 2026-10-17 20:52:11 Info: pcap: pcap file /pcaps/baseline_mqtt-20261016-114414.pcap end of file reached (pcap err code 0)
+[1 - Suricata-Main] 2026-10-17 20:52:11 Notice: suricata: Signal Received.  Stopping engine.
+[1 - Suricata-Main] 2026-10-17 20:52:11 Info: suricata: time elapsed 0.225s
+[12 - RX#01] 2026-10-17 20:52:11 Notice: pcap: read 1 file, 81180 packets, 12723324 bytes
+[1 - Suricata-Main] 2026-10-17 20:52:11 Info: counters: Alerts: 0

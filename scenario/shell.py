@@ -1,16 +1,11 @@
 #!/usr/bin/env python3
-"""Utilidad común de ejecución de comandos del sistema con captura.
-
-Usada por el resto de módulos del paquete `scenario` para invocar `docker`,
-`ssh-keygen`, etc. Mantiene exactamente la semántica del `run_cmd` original de
-`main.py`: shell=True, captura opcional y mensaje de error homogéneo.
-"""
+"""Helper `run_cmd` sobre subprocess (shell=True, captura opcional)."""
 
 import subprocess
 
 
 def run_cmd(cmd, check=True, capture=True):
-    """Ejecuta comandos del sistema con captura de errores."""
+    """Ejecuta un comando del sistema; imprime stderr si falla."""
     try:
         res = subprocess.run(
             cmd, shell=True, check=check, text=True,

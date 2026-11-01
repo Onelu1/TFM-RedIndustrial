@@ -1,0 +1,8 @@
+{"timestamp": "2026-10-21T13:21:40.577842+00:00", "tfm_src": "baseline/baseline_control-20261021-152139.pcap", "ip": "192.168.10.10", "mac": "be:67:f9:c3:e7:cd", "ip_mac": "192.168.10.10|be-67-f9-c3-e7-cd"}
+{"timestamp": "2026-10-21T13:21:40.579643+00:00", "tfm_src": "baseline/baseline_control-20261021-152139.pcap", "ip": "192.168.10.11", "mac": "be:67:f9:c3:e7:cd", "ip_mac": "192.168.10.11|be-67-f9-c3-e7-cd"}
+{"timestamp": "2026-10-21T13:21:40.579697+00:00", "tfm_src": "baseline/baseline_control-20261021-152139.pcap", "ip": "192.168.10.12", "mac": "be:67:f9:c3:e7:cd", "ip_mac": "192.168.10.12|be-67-f9-c3-e7-cd"}
+{"timestamp": "2026-10-21T13:21:40.577842+00:00", "tfm_src": "baseline/baseline_control-20261021-152139.pcap", "ip": "192.168.20.10", "mac": "3e:99:c7:ad:09:b1", "ip_mac": "192.168.20.10|3e-99-c7-ad-09-b1"}
+{"timestamp": "2026-10-21T13:21:40.474459+00:00", "tfm_src": "baseline/baseline_control-20261021-152139.pcap", "ip": "192.168.20.16", "mac": "9a:01:5c:85:d0:80", "ip_mac": "192.168.20.16|9a-01-5c-85-d0-80"}
+{"timestamp": "2026-10-21T13:21:40.602640+00:00", "tfm_src": "baseline/baseline_control-20261021-152139.pcap", "ip": "192.168.30.10", "mac": "be:67:f9:c3:e7:cd", "ip_mac": "192.168.30.10|be-67-f9-c3-e7-cd"}
+{"timestamp": "2026-10-21T13:21:40.603322+00:00", "tfm_src": "baseline/baseline_control-20261021-152139.pcap", "ip": "192.168.30.11", "mac": "be:67:f9:c3:e7:cd", "ip_mac": "192.168.30.11|be-67-f9-c3-e7-cd"}
+{"timestamp": "2026-10-21T13:21:40.605976+00:00", "tfm_src": "baseline/baseline_control-20261021-152139.pcap", "ip": "192.168.30.12", "mac": "be:67:f9:c3:e7:cd", "ip_mac": "192.168.30.12|be-67-f9-c3-e7-cd"}

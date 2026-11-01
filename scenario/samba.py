@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
-"""Preparación del pivote vulnerable Samba y claves SSH del laboratorio.
-
-Genera (si no existe) el directorio `recurso_compartido/ssh_keys/` con una clave
-RSA 2048 sin passphrase que luego el contenedor `srv_empresa` monta como
-`authorized_keys`. Este par de claves es, intencionadamente, inseguro: el
-toolkit de ataques lo descarga desde el share Samba anónimo.
-"""
+"""Genera la clave SSH que `srv_empresa` publica (vulnerable a propósito) en el
+share Samba anónimo del laboratorio."""
 
 import os
 

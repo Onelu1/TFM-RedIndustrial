@@ -1,25 +1,12 @@
 #!/usr/bin/env python3
-"""
-Ataques Siemens S7 (S7comm) vía la librería snap7.
-Reproduce los dos scripts documentados en el PDF del TFM: lectura de DB1 y
-escritura de setpoint (REAL) y bit de marcha (BOOL, patrón read-modify-write).
+"""Ataques Siemens S7comm (snap7): lectura DB1 y escritura setpoint/marcha.
 
-Mapa de la DB1 del simulador:
-  DB1.DBW0  (bytes 0-1)  INT   -> Temperatura (ºC)
-  DB1.DBW2  (bytes 2-3)  INT   -> Presión (bar)
-  DB1.DBX4.0 (byte 4,b0) BOOL  -> Marcha
-  DB1.DBX4.1 (byte 4,b1) BOOL  -> Parada de emergencia
-  DB1.DBD6  (bytes 6-9)  REAL  -> Setpoint (Hz)
-
-MITRE ATT&CK for ICS:
-  - T0861 Point Property Read (lectura)
-  - T0836 Modify Parameter    (escritura setpoint)
-  - T0855 Unauthorized Command Message (escritura marcha)
-
-Arquitectura: las funciones públicas (read_db1, write_setpoint, write_marcha)
-las llama el dashboard y LANZAN un subproceso `python3 -m modules._cli.s7_cli`
-envuelto por `runner.wrap_proxy()` (proxychains en modo empresa). Las variantes
-`_do_*` son la implementación in-process que corre dentro de ese subproceso.
+Mapa DB1 del simulador:
+    DBW0 INT  Temperatura (ºC)
+    DBW2 INT  Presión (bar)
+    DBX4.0 BOOL  Marcha
+    DBX4.1 BOOL  Parada emergencia
+    DBD6 REAL  Setpoint (Hz)
 """
 
 import config
@@ -34,10 +21,10 @@ except Exception as _e:  # noqa: BLE001
     _SNAP7_ERR = str(_e)
 
 
-# ---------------------------------------------------------------------------
-# IMPLEMENTACIÓN IN-PROCESS (_do_*): la ejecuta el subproceso _cli; imprime a
-# stdout a través del `sink`, que el dashboard redirige a la evidencia.
-# ---------------------------------------------------------------------------
+# Las funciones públicas (read_db1, write_setpoint, write_marcha) lanzan un
+# subproceso `python3 -m modules._cli.s7_cli` para que proxychains pueda
+# interceptar las llamadas C de snap7 cuando toca pasar por el túnel SOCKS.
+# Las _do_* son la implementación real que corre dentro de ese subproceso.
 
 def _connect(ip, rack, slot, sink):
     if not _SNAP7_OK:
@@ -123,11 +110,6 @@ def _do_write_marcha(ip, rack, slot, valor, sink):
         client.disconnect()
         sink("[+] Sesión S7comm finalizada.")
 
-
-# ---------------------------------------------------------------------------
-# FUNCIONES PÚBLICAS (dashboard): crean la evidencia y lanzan el _cli como
-# subproceso envuelto por wrap_proxy (proxychains en modo empresa).
-# ---------------------------------------------------------------------------
 
 def _launch_cli(action, args, path, sink):
     cmd = ["python3", "-m", "modules._cli.s7_cli", action] + args

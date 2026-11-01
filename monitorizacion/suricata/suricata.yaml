@@ -1,0 +1,123 @@
+%YAML 1.1
+---
+# suricata.yaml - configuracion minima para el laboratorio TFM.
+# Habilita app-layer para Modbus, DNP3 y ENIP; emite eve.json con alertas,
+# flujos y anomalias para que Wazuh lo ingiera.
+#
+# Las variables (SCADA_SERVERS, MQTT_BROKER, DNP3_GATEWAYS, C2_MAILBOX,
+# ENTERPRISE, OT_PLCS, HOME_NET, MGMT) se cargan del fichero externo
+# vars_kb.yaml, que se regenera dinamicamente en el modo entrenamiento [E]
+# a partir de monitorizacion/kb/inventario.json. NO editar vars_kb.yaml
+# a mano: se sobreescribe en cada [E].
+include: /etc/suricata/vars_kb.yaml
+
+default-rule-path: /etc/suricata/rules
+rule-files:
+  - local.rules
+
+default-log-dir: /var/log/suricata
+
+outputs:
+  - eve-log:
+      enabled: yes
+      filetype: regular
+      filename: eve.json
+      types:
+        - alert:
+            metadata: yes
+            tagged-packets: no
+        - anomaly:
+            enabled: yes
+        - http:
+            extended: yes
+        - dns
+        - tls
+        - flow
+        - netflow
+        - stats:
+            totals: yes
+            threads: no
+            deltas: no
+        # DNP3: emitir eventos app-layer (requests y responses) a eve.json.
+        # Lo consume aprender_valores_dnp3.py / eve2valores_dnp3.py para
+        # aprender bandas de valores y detectar escrituras fuera de rango.
+        - dnp3
+        # Modbus: emitir eventos app-layer (requests y responses) a eve.json.
+        # Habilitado para visibilidad live (reglas 2001xxx por valor fuera de
+        # banda; sin esto el parser decodifica pero no emite event_type:modbus).
+        - modbus:
+            extended: yes
+
+app-layer:
+  protocols:
+    modbus:
+      enabled: yes
+      detection-ports:
+        dp: 502
+      # Opciones del parser Modbus:
+      stream-depth: 0
+    dnp3:
+      enabled: yes
+      detection-ports:
+        dp: 20000
+    enip:
+      enabled: yes
+      detection-ports:
+        dp: 44818
+    http:
+      enabled: yes
+    tls:
+      enabled: yes
+    smb:
+      enabled: yes
+    ssh:
+      enabled: yes
+    dns:
+      tcp:
+        enabled: yes
+        detection-ports:
+          dp: 53
+      udp:
+        enabled: yes
+        detection-ports:
+          dp: 53
+
+logging:
+  default-log-level: notice
+  outputs:
+    - console:
+        enabled: yes
+    - file:
+        enabled: yes
+        level: info
+        filename: /var/log/suricata/suricata.log
+
+# Stream reassembly: habilitar midstream para que Suricata procese sesiones
+# TCP ya establecidas al arrancar (p. ej. polling continuo SCADA → PLC). Sin
+# esto, un restart de Suricata (como el que hace [E]) deja el stream en modo
+# "esperando SYN" para conexiones vivas y nunca parsea el app-layer.
+stream:
+  midstream: true
+  async-oneside: true
+
+# Modo offline: pcap -> eve.json (no se usa af-packet).
+pcap-file:
+  checksum-checks: no
+
+# Modo live con `--pcap=any` (libpcap). Docker/Linux hace checksum
+# offloading → los TCP checksums parecen invalidos y Suricata descarta
+# todos los paquetes. Desactivar la validacion es obligatorio en entornos
+# virtualizados.
+#
+# BPF filter: descarta paquetes NAT'ados por router_gw (MASQUERADE en las
+# zonas OT reescribe la IP origen de la SCADA a router.254). Sin este
+# filtro, las reglas basadas en `!$SCADA_SERVERS` disparan FPs masivos
+# porque ven ".10.254 -> plc" en vez de la IP real de la SCADA. El filtro
+# excluye los paquetes que viajan por las patas OT del router, dejando
+# solo los de las patas externas (control, empresa) con IPs reales.
+pcap:
+  - interface: any
+    checksum-checks: no
+    bpf-filter: not (host 192.168.10.254 or host 192.168.30.254 or host 192.168.40.254)
+  - interface: default
+    checksum-checks: no

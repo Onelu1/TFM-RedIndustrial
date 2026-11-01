@@ -1,23 +1,6 @@
 #!/usr/bin/env python3
-"""
-Pruebas contra el panel web de OpenPLC para el TFM (laboratorio local).
-
-  - Login con credenciales por defecto openplc:openplc   (T0812)
-  - PoC CVE-2026-71268: path traversal en compile_program (T0843/T0873).
-  - Lectura del programa activo (nombre, fichero, .st) para exfiltración.
-  - upload_run: subir + compilar + arrancar un programa, con backup previo
-    del .st actualmente cargado.
-
-Reproduce, con requests.Session, la misma secuencia de peticiones HTTP que el
-PDF documenta con curl. Pensado SOLO para los contenedores OpenPLC del
-laboratorio generados por tfm_simulacion/main.py.
-
-Arquitectura dual-mode: igual que s7_snap7, las funciones públicas crean la
-cabecera de evidencia y lanzan el subproceso `_cli.openplc_cli` envuelto por
-`runner.wrap_proxy` (proxychains en modo empresa). La implementación in-process
-(`_do_*`) vive aquí y la ejecuta ese subproceso.
-
-Referencia: https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/cve-2026-71268
+"""Pruebas contra el panel web de OpenPLC: login por defecto, CVE-2026-71268,
+lectura del programa activo y upload+run. Ver TFM.pdf cap. "OpenPLC".
 """
 
 import os
@@ -35,9 +18,8 @@ except Exception as _e:  # noqa: BLE001
     _REQUESTS_ERR = str(_e)
 
 
-# ---------------------------------------------------------------------------
-# Implementación in-process (la ejecuta el subproceso _cli)
-# ---------------------------------------------------------------------------
+# Las _do_* son la implementación in-process (las ejecuta el subproceso _cli
+# para que proxychains intercepte los sockets).
 
 def _base_url(target, port):
     return f"http://{target}:{port}"
@@ -474,10 +456,6 @@ def _do_cve_2026_71268(ip, port, user, password, st_file, prog_name, prog_descr,
     except Exception as e:  # noqa: BLE001
         sink(f"[!] Error durante el flujo: {e}")
 
-
-# ---------------------------------------------------------------------------
-# Funciones públicas (dashboard)
-# ---------------------------------------------------------------------------
 
 def _launch_cli(action, args, path, sink):
     cmd = ["python3", "-m", "modules._cli.openplc_cli", action] + args

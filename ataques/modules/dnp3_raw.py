@@ -1,28 +1,17 @@
 #!/usr/bin/env python3
-"""
-Motor DNP3-over-TCP pure Python (IEEE 1815 / IEC 62351).
+"""Motor DNP3-over-TCP mínimo en Python puro (IEEE 1815): Integrity Poll
+(Read Class 0) y Direct Operate CROB. Solo stdlib (socket + struct), compatible
+con proxychains.
 
-Implementa lo justo del protocolo DNP3 para realizar:
-  1. Integrity Poll (Read Class 0 Static Data)
-  2. Direct Operate CROB (Control Relay Output Block)
-
-Solo usa socket + struct de la biblioteca estandar.  Funciona en cualquier
-version de Python y es compatible con proxychains (intercepta connect()).
-
-Referencia de direccionamiento por defecto (igual que gateway_dnp3.py):
-  Master address  = 1
-  Outstation addr = 10
-  Puerto TCP      = 20000
+Direccionamiento por defecto (coincide con gateway_dnp3.py):
+    Master=1, Outstation=10, puerto 20000.
 """
 
 import socket
 import struct
 import time
 
-# =========================================================================
-# CRC-16/DNP  (poly 0x3D65, reflected 0xA6BC, init 0, xor-out 0xFFFF)
-# =========================================================================
-
+# CRC-16/DNP (poly 0x3D65, reflected 0xA6BC, init 0, xor-out 0xFFFF)
 _CRC_TABLE = []
 
 
@@ -47,9 +36,7 @@ def _crc(data: bytes) -> int:
     return crc ^ 0xFFFF
 
 
-# =========================================================================
-# Data-Link Layer
-# =========================================================================
+# --- Data-Link Layer ---
 
 _START = b"\x05\x64"
 
@@ -99,9 +86,7 @@ def _strip_frame(raw: bytes) -> bytes:
     return user_data
 
 
-# =========================================================================
-# Recepcion de tramas desde un socket TCP
-# =========================================================================
+# --- Recepción de tramas desde un socket TCP ---
 
 def _recv_frame(sock: socket.socket, timeout: float = 10) -> bytes:
     sock.settimeout(timeout)
@@ -141,9 +126,7 @@ def _try_recv_frame(sock: socket.socket, timeout: float = 2):
         return None
 
 
-# =========================================================================
-# Application Layer: construccion
-# =========================================================================
+# --- Application Layer: construcción ---
 
 def _app_read_class0(seq: int = 0) -> bytes:
     ac = 0xC0 | (seq & 0x0F)
@@ -172,9 +155,46 @@ def _app_direct_operate_crob(index: int, latch_on: bool, seq: int = 0) -> bytes:
     return payload
 
 
-# =========================================================================
-# Sesion DNP3: handshake + transaccion
-# =========================================================================
+def _app_direct_operate_g41v2(index: int, value: int, seq: int = 0) -> bytes:
+    """Direct Operate (FC=0x05) escribiendo G41V2 (Analog Output Int16)
+    en el indice dado. El outstation debe aceptar esta variacion;
+    si no la soporta devolvera un estatus != 0 en la respuesta."""
+    ac = 0xC0 | (seq & 0x0F)
+    fc = 0x05
+    payload = struct.pack("<BB", ac, fc)
+    payload += struct.pack("<BBB", 41, 2, 0x28)   # G41V2 qualifier (prefix 2B, range 2B)
+    payload += struct.pack("<H", 1)                # count = 1
+    payload += struct.pack("<H", index)            # index prefix
+    payload += struct.pack("<h", int(value))       # valor Int16 con signo
+    payload += struct.pack("<B", 0)                # status 0 (envio)
+    return payload
+
+
+def dnp3_write_analog_output(ip, port=20000, index=0, value=0,
+                              master_addr=1, outstation_addr=10,
+                              timeout=8, sink=None):
+    """Direct Operate G41V2: escribe `value` (Int16) en el indice analogico
+    `index`. Pensado para disparar la deteccion de valor fuera de rango
+    (regla Wazuh 100410) cuando `value` cae fuera de la banda aprendida."""
+    _stop_gateway(ip, sink)
+    try:
+        sock = socket.create_connection((ip, port), timeout=timeout)
+        try:
+            _drain_unsolicited(sock, outstation_addr, master_addr, timeout=3)
+            app = _app_direct_operate_g41v2(index, value, seq=1)
+            frame = _build_frame(b"\xC0" + app, outstation_addr, master_addr)
+            app_resp = _transact(sock, frame, outstation_addr, master_addr,
+                                 timeout=timeout)
+            _parse_objects(app_resp)
+            _log(sink, f"[+] G41V2 index={index} value={value}: enviado.")
+            return True
+        finally:
+            sock.close()
+    finally:
+        _start_gateway(ip, sink)
+
+
+# --- Sesión DNP3: handshake + transacción ---
 
 def _log(sink, msg):
     if sink:
@@ -302,9 +322,7 @@ def _transact(sock, request_frame, dest, src, sink=None, timeout=8):
     raise TimeoutError("No se recibio respuesta solicitada del outstation")
 
 
-# =========================================================================
-# Application Layer: parsing de respuestas
-# =========================================================================
+# --- Application Layer: parsing de respuestas ---
 
 def _parse_objects(app: bytes, sink=None) -> dict:
     if len(app) < 4:
@@ -484,9 +502,7 @@ def _object_size(grp, var):
     return None
 
 
-# =========================================================================
-# API publica
-# =========================================================================
+# --- API pública ---
 
 LABELS_BIN = {
     0: "Estado Bomba Principal (%QX0.0)",

@@ -1,13 +1,5 @@
 #!/usr/bin/env python3
-"""
-Entrypoint CLI del módulo C2 Modbus, lanzable como subproceso con proxychains.
-
-Se invoca desde el dashboard así:
-    [proxychains] python3 -m modules._cli.c2_modbus_cli <accion> --mailbox <ip> ...
-
-Imprime a stdout; es el dashboard (via runner.run_command) quien captura esa
-salida y la vuelca al fichero de evidencia.
-"""
+"""CLI del módulo C2 Modbus; se lanza como subproceso para pasar por proxychains."""
 
 import argparse
 import os

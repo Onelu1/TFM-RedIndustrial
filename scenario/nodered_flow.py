@@ -1,15 +1,6 @@
 #!/usr/bin/env python3
-"""Construcción del flow Node-RED que materializa el SCADA del laboratorio.
-
-:func:`generate_nodered_flow` devuelve la lista de nodos JSON (`modbus-client`,
-`modbus-read/write`, `s7 endpoint`, `s7 in/out`, `mqtt in/out`, widgets
-Dashboard 2.0, grupos y páginas) para las tres zonas OT, con tantos PLCs por
-zona como pida la llamada.
-
-:func:`save_flows_file` serializa a `nodered_data_scada_1/flows.json` con
-`indent=4` — exactamente el mismo contrato que el `main.py` original (byte a
-byte).
-"""
+"""Construye el flow Node-RED SCADA (Modbus + S7 + DNP3) y lo serializa a
+`nodered_data_scada_1/flows.json`."""
 
 import json
 import os

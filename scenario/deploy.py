@@ -1,18 +1,8 @@
 #!/usr/bin/env python3
-"""Despliegue end-to-end, limpieza y cambio de modo de ``kali_nodo``.
-
-Orquesta las piezas de los demás módulos:
-
-- :func:`deploy_scenario` construye imágenes (si faltan), prepara Samba,
-  genera el compose, levanta los contenedores con `docker compose up`,
-  instala los paquetes de Node-RED, reinicia Node-RED e inyecta las rutas
-  estáticas inter-zona.
-- :func:`clean_environment` tira todo con `docker compose down --remove-orphans`.
-- :func:`switch_kali_mode` cambia solo `kali_nodo` entre ``empresa`` y
-  ``control`` sin tocar los PLCs (regenera compose + recrea el contenedor).
-"""
+"""Despliegue end-to-end, limpieza y cambio de modo de `kali_nodo`."""
 
 import os
+import subprocess
 import time
 
 from .compose import generate_docker_compose, read_scenario_sizes
@@ -20,6 +10,85 @@ from .docker_images import build_openplc_image_if_needed, build_s7_image_if_need
 from .nodered_flow import save_flows_file  # noqa: F401 — reservado para extensiones
 from .samba import setup_vulnerable_samba
 from .shell import run_cmd
+
+
+def preparar_router():
+    """Instala tcpdump+iptables en router_gw y añade reglas MASQUERADE hacia
+    las zonas OT. Puerto en Python del antiguo `preparar_router.sh` para que
+    funcione desde `python main.py` sin depender de bash en el host (en
+    Windows la invocacion a `bash` tiraba de WSL y fallaba silenciosa).
+
+    Es idempotente. Tambien escribe `monitorizacion/captura/.ifaces.env`
+    para que `capturar.sh` lo use mas adelante.
+    """
+    print("[router] Instalando tcpdump + iptables en router_gw...")
+    run_cmd(
+        'docker exec -u 0 router_gw sh -c '
+        '"command -v tcpdump >/dev/null || apk add --no-cache tcpdump >/dev/null; '
+        'command -v iptables >/dev/null || apk add --no-cache iptables >/dev/null"',
+        check=False,
+    )
+
+    print("[router] Instalando tcpdump en broker_mqtt...")
+    run_cmd(
+        'docker exec -u 0 broker_mqtt sh -c '
+        '"command -v tcpdump >/dev/null || apk add --no-cache tcpdump >/dev/null"',
+        check=False,
+    )
+
+    print("[router] Mapeando interfaces por red...")
+    # Las interfaces de router_gw cambian de orden entre arranques. Deduzco
+    # el nombre a partir de la IP para que las reglas iptables sean estables.
+    def iface_de(ip):
+        # Nota: usamos subprocess directo para evitar la captura/limpieza
+        # ambigua de run_cmd y procesar la salida linea a linea.
+        out = subprocess.run(
+            ["docker", "exec", "router_gw", "ip", "-o", "-4", "addr", "show"],
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+        ).stdout
+        for linea in out.splitlines():
+            # formato: "N: ethX    inet 192.168.X.Y/24 brd ... scope global ethX"
+            partes = linea.split()
+            if len(partes) >= 4 and partes[3].startswith(ip + "/"):
+                return partes[1]
+        return ""
+
+    mapeo = {
+        "IF_CTRL": iface_de("192.168.20.254"),
+        "IF_EMPR": iface_de("192.168.60.254"),
+        "IF_MOD":  iface_de("192.168.10.254"),
+        "IF_S7":   iface_de("192.168.30.254"),
+        "IF_DNP":  iface_de("192.168.40.254"),
+    }
+    for k, v in mapeo.items():
+        print(f"   {k} = {v}")
+
+    if not (mapeo["IF_MOD"] and mapeo["IF_S7"] and mapeo["IF_DNP"]):
+        print("[router] ERROR: no he podido mapear alguna interfaz OT; abortando MASQUERADE.")
+        return
+
+    print("[router] Instalando reglas MASQUERADE...")
+    run_cmd(
+        'docker exec -u 0 router_gw sh -c "'
+        'iptables -t nat -F POSTROUTING 2>/dev/null || true; '
+        f'iptables -t nat -A POSTROUTING -d 192.168.10.0/24 -o {mapeo["IF_MOD"]} -j MASQUERADE; '
+        f'iptables -t nat -A POSTROUTING -d 192.168.30.0/24 -o {mapeo["IF_S7"]} -j MASQUERADE; '
+        f'iptables -t nat -A POSTROUTING -d 192.168.40.0/24 -o {mapeo["IF_DNP"]} -j MASQUERADE'
+        '"',
+        check=False,
+    )
+
+    # Exportamos el mapeo para capturar.sh (misma ruta que generaba el .sh).
+    env_path = os.path.join("monitorizacion", "captura", ".ifaces.env")
+    try:
+        os.makedirs(os.path.dirname(env_path), exist_ok=True)
+        with open(env_path, "w", encoding="utf-8") as f:
+            f.write("# Generado por scenario.deploy.preparar_router() (NO EDITAR A MANO)\n")
+            for k, v in mapeo.items():
+                f.write(f"{k}={v}\n")
+        print(f"[router] OK. Mapeo guardado en {env_path}")
+    except OSError as e:
+        print(f"[router] Aviso: no pude escribir {env_path}: {e}")
 
 
 def switch_kali_mode():
@@ -100,6 +169,14 @@ def deploy_scenario(num_modbus_a, num_s7_b, num_dnp3_c=0, kali_mode="empresa"):
     time.sleep(8)
 
     print("[*] [4/4] Instalando utilidades e inyectando rutas estáticas inter-zona...")
+
+    # MASQUERADE + iptables en router_gw. Imprescindible porque las zonas OT
+    # son internal:true y, sin SNAT, las respuestas de los PLCs no vuelven a
+    # red_control/red_empresa. Antes solo lo hacía la opción 8 (arrancar_todo)
+    # vía bash; ahora lo hace esta misma funcion en Python para que funcione
+    # tambien desde `python main.py` en Windows sin bash en PATH.
+    print("[*] Preparando router_gw (MASQUERADE hacia zonas OT)...")
+    preparar_router()
 
     run_cmd("docker exec -u root nodered_scada_1 ip route add 192.168.10.0/24 via 192.168.20.254", check=False)
     run_cmd("docker exec -u root nodered_scada_1 ip route add 192.168.30.0/24 via 192.168.20.254", check=False)

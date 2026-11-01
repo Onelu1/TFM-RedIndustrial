@@ -1,0 +1,18 @@
+# c2_mailbox.yaml - Lista manual de IPs que, en el ejercicio actual, actuan
+# como buzon C2 FrostyGoop. Se mantiene manual porque el inferidor NO puede
+# distinguir un plc_modbus "normal" de un plc_modbus usado como buzon C2:
+# el trafico es identico (polling SCADA, misma firma Modbus TCP). La
+# distincion vive en los registros Modbus internos (>=1000), no en los flujos.
+#
+# construir_kb.py lee este fichero (si existe) y promueve las IPs listadas:
+#  - al rol `plc_modbus_c2_mailbox` dentro de la KB.
+#  - al address-group `$C2_MAILBOX` de Suricata (reglas 2000160/61/62).
+#
+# Si la lista esta vacia o este fichero no existe, $C2_MAILBOX queda como
+# placeholder never-match "[0.0.0.0/32]" y las reglas FrostyGoop no disparan.
+#
+# EDITA ESTA LISTA ANTES DE LANZAR UN EJERCICIO DE C2.
+# Fuera de ejercicios FrostyGoop, dejala vacia para evitar falsos positivos.
+
+c2_mailbox:
+  # - 192.168.10.11   # plc_agua_2 (buzon C2 FrostyGoop del escenario TFM)

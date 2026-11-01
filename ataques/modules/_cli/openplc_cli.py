@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Entrypoint CLI del módulo OpenPLC, lanzable como subproceso con proxychains.
-"""
+"""CLI del módulo OpenPLC; se lanza como subproceso para pasar por proxychains."""
 
 import argparse
 import os

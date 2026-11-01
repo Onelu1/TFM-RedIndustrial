@@ -47,13 +47,26 @@
 {% endif %}
 
 <main>
-  <section class="grid">
-    {% for group_name, actions in groups %}
-      <article class="card">
-        <header class="card-head">
-          <h2>{{ group_name }}</h2>
-        </header>
-        <div class="card-body">
+  <section class="tabs-wrap">
+    <nav class="tabs" role="tablist" aria-label="Modulos de ataque">
+      {% for group_name, actions in groups %}
+        <button class="tab {% if loop.first %}is-active{% endif %}"
+                role="tab" type="button"
+                data-group-idx="{{ loop.index0 }}"
+                aria-selected="{{ 'true' if loop.first else 'false' }}">
+          {{ group_name }}
+        </button>
+      {% endfor %}
+    </nav>
+    <select class="tabs-select" aria-label="Selecciona modulo">
+      {% for group_name, actions in groups %}
+        <option value="{{ loop.index0 }}">{{ group_name }}</option>
+      {% endfor %}
+    </select>
+    <div class="tab-panels">
+      {% for group_name, actions in groups %}
+        <article class="tab-panel {% if loop.first %}is-active{% endif %}"
+                 data-group-idx="{{ loop.index0 }}">
           {% for aid in actions %}
             {% set e = catalog[aid] %}
             <details class="action">
@@ -74,9 +87,9 @@
               </form>
             </details>
           {% endfor %}
-        </div>
-      </article>
-    {% endfor %}
+        </article>
+      {% endfor %}
+    </div>
   </section>
 
   <aside class="console">
@@ -92,8 +105,31 @@
       <small>Las evidencias se guardan en <code>ataques/evidencias/</code> con timestamp.</small>
     </footer>
   </aside>
+
+  <section class="network-map">
+    <header class="map-head">
+      <h2>Mapa del escenario</h2>
+      <div class="map-meta">
+        <span id="map-source" class="chip chip-neutral">—</span>
+        <span id="map-count" class="chip">— nodos</span>
+        <button id="map-maximize" class="chip-btn" type="button"
+                aria-label="Maximizar mapa" title="Maximizar (ESC para salir)">⤢</button>
+        <button id="map-refresh" class="chip-btn" type="button">↻ Refrescar</button>
+      </div>
+    </header>
+    <div id="network-canvas"></div>
+    <footer class="map-foot">
+      <small>
+        <span class="legend-dot legend-up"></span> Running
+        <span class="legend-dot legend-down"></span> Parado
+        <span class="legend-dot legend-unknown"></span> Desconocido
+        · Topología leída de Docker. Refresco automático cada 5 s.
+      </small>
+    </footer>
+  </section>
 </main>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.9/standalone/umd/vis-network.min.js"></script>
 <script>
 const outEl = document.getElementById("console-out");
 const labelEl = document.getElementById("job-label");
@@ -133,7 +169,6 @@ async function launch(action, params) {
     src.close();
   });
   src.onerror = () => {
-    // la conexión se cierra sola al terminar; solo marcamos si no hubo end
     if (statusEl.textContent === "running") setStatus("stream closed", "chip-err");
   };
 }
@@ -148,8 +183,242 @@ document.querySelectorAll("form.params").forEach((form) => {
   });
 });
 
-// En modo empresa, refrescar el estado del túnel cada 5 s para que el chip
-// cambie en cuanto el usuario pulse "Abrir túnel".
+// --- Pestanas: sincroniza botones <-> <select> y persiste en localStorage ---
+const tabButtons = document.querySelectorAll(".tab");
+const tabPanels = document.querySelectorAll(".tab-panel");
+const tabSelect = document.querySelector(".tabs-select");
+const TABS_KEY = "tfm_active_tab";
+
+function activateTab(idx) {
+  idx = String(idx);
+  tabButtons.forEach((b) => {
+    const match = b.dataset.groupIdx === idx;
+    b.classList.toggle("is-active", match);
+    b.setAttribute("aria-selected", match ? "true" : "false");
+  });
+  tabPanels.forEach((p) => {
+    p.classList.toggle("is-active", p.dataset.groupIdx === idx);
+  });
+  if (tabSelect && tabSelect.value !== idx) tabSelect.value = idx;
+  try { localStorage.setItem(TABS_KEY, idx); } catch (_e) {}
+}
+
+tabButtons.forEach((b) => {
+  b.addEventListener("click", () => activateTab(b.dataset.groupIdx));
+});
+if (tabSelect) {
+  tabSelect.addEventListener("change", (ev) => activateTab(ev.target.value));
+}
+try {
+  const saved = localStorage.getItem(TABS_KEY);
+  if (saved !== null && document.querySelector(`.tab[data-group-idx="${saved}"]`)) {
+    activateTab(saved);
+  }
+} catch (_e) {}
+
+// --- Mapa de red con vis-network ---
+const COLOR_UP = "#3fcf8e";
+const COLOR_DOWN = "#ff6b6b";
+const COLOR_UNKNOWN = "#8ea0bf";
+const canvas = document.getElementById("network-canvas");
+const mapCount = document.getElementById("map-count");
+const mapSource = document.getElementById("map-source");
+let nodesDataSet = null;
+let edgesDataSet = null;
+let network = null;
+
+function statusColor(s) {
+  if (s === "up") return COLOR_UP;
+  if (s === "down") return COLOR_DOWN;
+  return COLOR_UNKNOWN;
+}
+
+function computeLayout(topo) {
+  // Layout determinista en forma de rueda:
+  //   - router_gw en el centro (conecta a todas las subredes)
+  //   - subredes en un circulo intermedio
+  //   - contenedores en un arco mas externo, agrupados por subred primaria
+  const SUBNET_R    = 260;   // radio del anillo de subredes
+  const CONTAINER_R = 520;   // radio del anillo de contenedores
+  const positions = {};      // nodeId -> {x, y}
+
+  // 1) Ordenar subredes por un orden canonico para evitar que cambien de sitio
+  //    entre refrescos (asi tu "mapa mental" se mantiene).
+  const SUBNET_ORDER = [
+    "red_empresa", "red_control", "red_monitorizacion",
+    "red_ot_zona_a", "red_ot_zona_c", "red_ot_zona_b",
+  ];
+  const subnets = (topo.subnets || []).slice().sort((a, b) => {
+    return SUBNET_ORDER.indexOf(a.id) - SUBNET_ORDER.indexOf(b.id);
+  });
+
+  const subnetAngle = {};
+  subnets.forEach((s, i) => {
+    const a = (2 * Math.PI * i) / subnets.length - Math.PI / 2;
+    subnetAngle[s.id] = a;
+    positions[s.id] = { x: SUBNET_R * Math.cos(a), y: SUBNET_R * Math.sin(a) };
+  });
+
+  // 2) Agrupar contenedores por su subred "primaria". Caso especial: router_gw
+  //    y cualquier nodo multi-red se tratan aparte.
+  const byPrimary = {};
+  const special = [];
+  (topo.nodes || []).forEach((n) => {
+    if (n.id === "router_gw") { special.push(n); return; }
+    const myEdges = (topo.edges || []).filter((e) => e.from === n.id);
+    // Si tiene exactamente 1 subred -> esa.
+    // Si tiene varias y una de ellas coincide con la IP primaria -> esa.
+    // Si no, la primera.
+    let primary;
+    if (myEdges.length === 1) primary = myEdges[0].to;
+    else {
+      const match = myEdges.find((e) => e.ip === n.ip);
+      primary = match ? match.to : myEdges[0] && myEdges[0].to;
+    }
+    if (!primary) return;
+    (byPrimary[primary] = byPrimary[primary] || []).push(n);
+  });
+
+  // 3) router_gw al centro.
+  special.forEach((n) => { positions[n.id] = { x: 0, y: 0 }; });
+
+  // 4) Contenedores en un arco por delante de su subred.
+  Object.entries(byPrimary).forEach(([subnetId, nodes]) => {
+    const base = subnetAngle[subnetId];
+    if (base === undefined) return;
+    const span = Math.PI / 2.5;  // 72 grados de arco por subred
+    nodes.forEach((n, i) => {
+      const t = nodes.length === 1 ? 0 : (i / (nodes.length - 1)) - 0.5;
+      const a = base + t * span;
+      positions[n.id] = { x: CONTAINER_R * Math.cos(a),
+                           y: CONTAINER_R * Math.sin(a) };
+    });
+  });
+
+  return positions;
+}
+
+async function buildNetwork() {
+  const topo = await fetch("/api/network/topology").then((r) => r.json());
+  const positions = computeLayout(topo);
+
+  const subnetNodes = (topo.subnets || []).map((s) => ({
+    id: s.id, label: s.label, shape: "box",
+    color: { background: "rgba(255,255,255,0.04)", border: s.color },
+    font: { color: s.color, size: 13, face: "Segoe UI" },
+    margin: 10, borderWidth: 2,
+    x: positions[s.id] ? positions[s.id].x : 0,
+    y: positions[s.id] ? positions[s.id].y : 0,
+    fixed: { x: true, y: true },
+    physics: false,
+  }));
+  const containerNodes = (topo.nodes || []).map((n) => ({
+    id: n.id, label: n.label, shape: "dot", size: 20,
+    color: { background: COLOR_UNKNOWN, border: n.color },
+    borderWidth: 3,
+    font: { color: "#e6ecf5", size: 12, face: "ui-monospace, Consolas, monospace",
+            multi: false, strokeWidth: 0 },
+    title: n.title || n.label,
+    x: positions[n.id] ? positions[n.id].x : 0,
+    y: positions[n.id] ? positions[n.id].y : 0,
+    fixed: { x: true, y: true },
+    physics: false,
+  }));
+  const allNodes = subnetNodes.concat(containerNodes);
+  const allEdges = (topo.edges || []).map((e, i) => ({
+    id: "e" + i, from: e.from, to: e.to,
+    color: { color: "rgba(142,160,191,0.4)" },
+    label: e.ip, font: { size: 10, color: "#8ea0bf",
+                          strokeWidth: 0, background: "rgba(0,0,0,0.3)",
+                          align: "middle" },
+    smooth: false, width: 1,
+  }));
+
+  nodesDataSet = new vis.DataSet(allNodes);
+  edgesDataSet = new vis.DataSet(allEdges);
+
+  const options = {
+    layout: { randomSeed: 7, improvedLayout: false },
+    physics: { enabled: false },
+    interaction: {
+      hover: true, tooltipDelay: 150,
+      zoomView: true, dragView: true, dragNodes: true,
+    },
+    nodes: { shadow: false },
+    edges: { shadow: false, smooth: false },
+  };
+
+  if (network) network.destroy();
+  network = new vis.Network(canvas, { nodes: nodesDataSet, edges: edgesDataSet },
+                             options);
+  // Ajusta el zoom para que entre todo el grafo visible sin animacion.
+  network.fit({ animation: false });
+
+  mapCount.textContent = containerNodes.length + " nodos · " +
+                          subnetNodes.length + " redes";
+  if (mapSource) {
+    const src = topo.source || "—";
+    mapSource.textContent = "fuente: " + src;
+    mapSource.className = "chip " + (src === "docker" ? "chip-ok" :
+                                      src === "compose" ? "chip-run" : "chip-err");
+  }
+  await refreshStatus();
+}
+
+async function refreshStatus() {
+  if (!nodesDataSet) return;
+  try {
+    const s = await fetch("/api/network/status").then((r) => r.json());
+    const updates = Object.entries(s).map(([id, state]) => {
+      const existing = nodesDataSet.get(id);
+      if (!existing) return null;
+      const border = existing.color && existing.color.border;
+      return { id, color: { background: statusColor(state), border } };
+    }).filter(Boolean);
+    if (updates.length) nodesDataSet.update(updates);
+  } catch (_e) { /* ignore */ }
+}
+
+document.getElementById("map-refresh").addEventListener("click", buildNetwork);
+
+if (canvas && window.vis) {
+  buildNetwork();
+  setInterval(refreshStatus, 5000);
+}
+
+// --- Maximizar/restaurar el mapa de red ---
+const mapSection = document.querySelector(".network-map");
+const btnMaximize = document.getElementById("map-maximize");
+
+function resizeNetworkToCanvas() {
+  if (!network || !canvas) return;
+  network.setSize("100%", canvas.clientHeight + "px");
+  network.redraw();
+  network.fit({ animation: false });
+}
+
+function toggleMaximize() {
+  const nowMax = mapSection.classList.toggle("is-maximized");
+  document.body.classList.toggle("map-maximized", nowMax);
+  btnMaximize.textContent = nowMax ? "⤡" : "⤢";
+  btnMaximize.setAttribute("aria-label",
+    nowMax ? "Restaurar tamaño" : "Maximizar mapa");
+  requestAnimationFrame(resizeNetworkToCanvas);
+}
+
+if (btnMaximize && mapSection) {
+  btnMaximize.addEventListener("click", toggleMaximize);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && mapSection.classList.contains("is-maximized")) {
+      toggleMaximize();
+    }
+  });
+  window.addEventListener("resize", () => {
+    if (mapSection.classList.contains("is-maximized")) resizeNetworkToCanvas();
+  });
+}
+
+// Chip de tunel: refresco en modo empresa (sin cambios respecto al original).
 const chipTunnel = document.getElementById("chip-tunnel");
 if (chipTunnel) {
   setInterval(async () => {

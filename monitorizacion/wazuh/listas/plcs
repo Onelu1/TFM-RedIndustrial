@@ -1,0 +1,13 @@
+192.168.10.10:502:plc_modbus:proto=6
+192.168.10.11:502:plc_modbus:proto=6
+192.168.10.12:502:plc_modbus:proto=6
+192.168.10.13:502:plc_modbus:proto=6
+192.168.20.15:1883:broker_mqtt:proto=6
+192.168.30.10:102:plc_s7:proto=6
+192.168.30.11:102:plc_s7:proto=6
+192.168.30.12:102:plc_s7:proto=6
+192.168.30.13:102:plc_s7:proto=6
+192.168.40.10:20000:plc_dnp3:proto=6
+192.168.40.11:20000:plc_dnp3:proto=6
+192.168.40.12:20000:plc_dnp3:proto=6
+192.168.40.13:20000:plc_dnp3:proto=6

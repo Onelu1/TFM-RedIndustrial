@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
-"""Compilación bajo demanda de las imágenes Docker locales del laboratorio.
-
-- `mi_plc_siemens` desde `siemens_s7/Dockerfile`.
-- `mi_openplc`    desde `openplc/Dockerfile`.
-
-Si `docker images -q <imagen>` ya devuelve un ID, se omite la compilación. Los
-textos impresos coinciden con los del `main.py` original para no romper
-capturas/evidencias.
-"""
+"""Compilación bajo demanda de las dos imágenes Docker locales del laboratorio
+(`mi_plc_siemens` y `mi_openplc`); se omite si `docker images -q` las encuentra."""
 
 import os
 

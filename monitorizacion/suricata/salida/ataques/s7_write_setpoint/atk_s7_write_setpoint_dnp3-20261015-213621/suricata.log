@@ -1,0 +1,48 @@
+[1 - Suricata-Main] 2026-10-16 11:37:29 Notice: suricata: This is Suricata version 8.0.7 RELEASE running in USER mode
+[1 - Suricata-Main] 2026-10-16 11:37:29 Info: cpu: CPUs/cores online: 20
+[1 - Suricata-Main] 2026-10-16 11:37:29 Info: suricata: Setting engine mode to IDS mode by default
+[1 - Suricata-Main] 2026-10-16 11:37:29 Info: suricata: No 'host-mode': suricata is in IDS mode, using default setting 'sniffer-only'
+[1 - Suricata-Main] 2026-10-16 11:37:29 Notice: stream-tcp: stream.reassembly.depth set to unlimited by default
+[1 - Suricata-Main] 2026-10-16 11:37:29 Info: logopenfile: eve-log output device (regular) initialized: eve.json
+[1 - Suricata-Main] 2026-10-16 11:37:29 Info: detect: 1 rule files processed. 22 rules successfully loaded, 0 rules failed, 0 rules skipped
+[1 - Suricata-Main] 2026-10-16 11:37:29 Info: threshold-config: Threshold config parsed: 0 rule(s) found
+[1 - Suricata-Main] 2026-10-16 11:37:29 Info: detect: 22 signatures processed. 2 are IP-only rules, 1 are inspecting packet payload, 13 inspect application layer, 0 are decoder event only
+[12 - RX#01] 2026-10-16 11:37:29 Info: pcap: Starting file run for /pcaps/atk_s7_write_setpoint_dnp3-20261015-213621.pcap
+[1 - Suricata-Main] 2026-10-16 11:37:29 Notice: threads: Threads created -> RX: 1 W: 20 FM: 1 FR: 1   Engine started.
+[12 - RX#01] 2026-10-16 11:37:29 Info: pcap: pcap file /pcaps/atk_s7_write_setpoint_dnp3-20261015-213621.pcap end of file reached (pcap err code 0)
+[1 - Suricata-Main] 2026-10-16 11:37:29 Notice: suricata: Signal Received.  Stopping engine.
+[1 - Suricata-Main] 2026-10-16 11:37:29 Info: suricata: time elapsed 0.128s
+[12 - RX#01] 2026-10-16 11:37:29 Notice: pcap: read 1 file, 1316 packets, 166920 bytes
+[1 - Suricata-Main] 2026-10-16 11:37:29 Info: counters: Alerts: 0
+[1 - Suricata-Main] 2026-10-16 23:01:46 Notice: suricata: This is Suricata version 8.0.7 RELEASE running in USER mode
+[1 - Suricata-Main] 2026-10-16 23:01:46 Info: cpu: CPUs/cores online: 20
+[1 - Suricata-Main] 2026-10-16 23:01:46 Info: suricata: Setting engine mode to IDS mode by default
+[1 - Suricata-Main] 2026-10-16 23:01:46 Info: suricata: No 'host-mode': suricata is in IDS mode, using default setting 'sniffer-only'
+[1 - Suricata-Main] 2026-10-16 23:01:46 Notice: stream-tcp: stream.reassembly.depth set to unlimited by default
+[1 - Suricata-Main] 2026-10-16 23:01:46 Info: logopenfile: eve-log output device (regular) initialized: eve.json
+[1 - Suricata-Main] 2026-10-16 23:01:46 Info: detect: 1 rule files processed. 22 rules successfully loaded, 0 rules failed, 0 rules skipped
+[1 - Suricata-Main] 2026-10-16 23:01:46 Info: threshold-config: Threshold config parsed: 0 rule(s) found
+[1 - Suricata-Main] 2026-10-16 23:01:46 Info: detect: 22 signatures processed. 2 are IP-only rules, 1 are inspecting packet payload, 13 inspect application layer, 0 are decoder event only
+[12 - RX#01] 2026-10-16 23:01:47 Info: pcap: Starting file run for /pcaps/atk_s7_write_setpoint_dnp3-20261015-213621.pcap
+[1 - Suricata-Main] 2026-10-16 23:01:47 Notice: threads: Threads created -> RX: 1 W: 20 FM: 1 FR: 1   Engine started.
+[12 - RX#01] 2026-10-16 23:01:47 Info: pcap: pcap file /pcaps/atk_s7_write_setpoint_dnp3-20261015-213621.pcap end of file reached (pcap err code 0)
+[1 - Suricata-Main] 2026-10-16 23:01:47 Notice: suricata: Signal Received.  Stopping engine.
+[1 - Suricata-Main] 2026-10-16 23:01:47 Info: suricata: time elapsed 0.173s
+[12 - RX#01] 2026-10-16 23:01:47 Notice: pcap: read 1 file, 1316 packets, 166920 bytes
+[1 - Suricata-Main] 2026-10-16 23:01:47 Info: counters: Alerts: 0
+[1 - Suricata-Main] 2026-10-17 20:52:05 Notice: suricata: This is Suricata version 8.0.7 RELEASE running in USER mode
+[1 - Suricata-Main] 2026-10-17 20:52:05 Info: cpu: CPUs/cores online: 20
+[1 - Suricata-Main] 2026-10-17 20:52:05 Info: suricata: Setting engine mode to IDS mode by default
+[1 - Suricata-Main] 2026-10-17 20:52:05 Info: suricata: No 'host-mode': suricata is in IDS mode, using default setting 'sniffer-only'
+[1 - Suricata-Main] 2026-10-17 20:52:05 Notice: stream-tcp: stream.reassembly.depth set to unlimited by default
+[1 - Suricata-Main] 2026-10-17 20:52:05 Info: logopenfile: eve-log output device (regular) initialized: eve.json
+[1 - Suricata-Main] 2026-10-17 20:52:05 Info: detect: 1 rule files processed. 22 rules successfully loaded, 0 rules failed, 0 rules skipped
+[1 - Suricata-Main] 2026-10-17 20:52:05 Info: threshold-config: Threshold config parsed: 0 rule(s) found
+[1 - Suricata-Main] 2026-10-17 20:52:05 Info: detect: 22 signatures processed. 2 are IP-only rules, 1 are inspecting packet payload, 13 inspect application layer, 0 are decoder event only
+[12 - RX#01] 2026-10-17 20:52:05 Info: pcap: Starting file run for /pcaps/atk_s7_write_setpoint_dnp3-20261015-213621.pcap
+[1 - Suricata-Main] 2026-10-17 20:52:05 Notice: threads: Threads created -> RX: 1 W: 20 FM: 1 FR: 1   Engine started.
+[12 - RX#01] 2026-10-17 20:52:05 Info: pcap: pcap file /pcaps/atk_s7_write_setpoint_dnp3-20261015-213621.pcap end of file reached (pcap err code 0)
+[1 - Suricata-Main] 2026-10-17 20:52:05 Notice: suricata: Signal Received.  Stopping engine.
+[1 - Suricata-Main] 2026-10-17 20:52:05 Info: suricata: time elapsed 0.115s
+[12 - RX#01] 2026-10-17 20:52:05 Notice: pcap: read 1 file, 1316 packets, 166920 bytes
+[1 - Suricata-Main] 2026-10-17 20:52:05 Info: counters: Alerts: 0

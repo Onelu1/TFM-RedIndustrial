@@ -1,0 +1,192 @@
+# Wazuh single-node para el laboratorio TFM.
+# Basado en wazuh-docker v4.9.2 single-node/docker-compose.yml con TRES
+# cambios mínimos sobre el upstream:
+#
+#   (A) Los certs van en un volumen Docker nombrado `wazuh_certs` en lugar
+#       de bind-mount desde `./config/wazuh_indexer_ssl_certs/`. Esto evita
+#       el bug conocido Docker Desktop Windows: Java SecurityManager de
+#       OpenSearch deniega lectura de bind-mounts Windows por permisos uid.
+#       Los volúmenes nombrados viven en la VM WSL2 y conservan ownership.
+#   (B) Red `red_monitorizacion` como external (la crea el compose del lab).
+#       IPs fijas .10 manager, .11 indexer, .12 dashboard.
+#   (C) Montajes de los add-ons TFM (decoders, rules, listas CDB, log
+#       sources). Esto SÍ es bind-mount porque son read-only puros que no
+#       dependen de uid (no sufren el bug).
+#
+# Pre-requisito: ejecutar `docker compose -f generate-certs.yml run --rm
+# generator` ANTES del primer `up -d`.
+
+services:
+  wazuh.manager:
+    image: wazuh/wazuh-manager:4.9.2
+    container_name: wazuh.manager
+    hostname: wazuh.manager
+    restart: always
+    user: root  # entrypoint lee /certificates (0500 root) y hace exec /init
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 655360
+        hard: 655360
+    environment:
+      - INDEXER_URL=https://wazuh.indexer:9200
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=${INDEXER_PASSWORD:-CambiameFuerte-123}
+      - FILEBEAT_SSL_VERIFICATION_MODE=full
+      - SSL_CERTIFICATE_AUTHORITIES=/etc/ssl/root-ca.pem
+      - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
+      - SSL_KEY=/etc/ssl/filebeat.key
+      - API_USERNAME=wazuh-wui
+      - API_PASSWORD=${WAZUH_API_PASSWORD:-MyS3cr37P450r.*-}
+    networks:
+      red_monitorizacion:
+        ipv4_address: 192.168.50.10
+    volumes:
+      # Estado persistente (volúmenes gestionados por Docker)
+      - wazuh_api_configuration:/var/ossec/api/configuration
+      - wazuh_etc:/var/ossec/etc
+      - wazuh_logs:/var/ossec/logs
+      - wazuh_queue:/var/ossec/queue
+      - wazuh_var_multigroups:/var/ossec/var/multigroups
+      - wazuh_integrations:/var/ossec/integrations
+      - wazuh_active_response:/var/ossec/active-response/bin
+      - wazuh_agentless:/var/ossec/agentless
+      - wazuh_wodles:/var/ossec/wodles
+      - filebeat_etc:/etc/filebeat
+      - filebeat_var:/var/lib/filebeat
+      # (A) Certs desde volumen Docker nombrado
+      - wazuh_certs:/certificates:ro
+      # (C) ossec.conf + add-ons TFM encima del wazuh-config-mount
+      - ./upstream/config/wazuh_cluster/wazuh_manager.conf:/wazuh-config-mount/etc/ossec.conf
+      - ./decoders/local_decoder.xml:/wazuh-config-mount/etc/decoders/local_decoder.xml
+      - ./rules/local_rules.xml:/wazuh-config-mount/etc/rules/local_rules.xml
+      - ./listas:/wazuh-config-mount/etc/lists/tfm
+      # (C) Fuentes de telemetría TFM (read-only)
+      - ../flujos/salida:/var/log/tfm/flujos:ro
+      - ../suricata/salida:/var/log/tfm/suricata:ro
+      - ../../ataques/evidencias:/var/log/tfm/ataques:ro
+      # Agregados all_eve.json, all_flujos.json, all_macs.json producidos por agregar_eve.sh
+      - .:/var/log/tfm/wazuh_in:ro
+    # Al arrancar, copia los certs desde /certificates (vol) a sus paths
+    # internos esperados. El entrypoint oficial de la imagen hace el resto.
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        set -e
+        cp /certificates/root-ca-manager.pem /etc/ssl/root-ca.pem
+        cp /certificates/wazuh.manager.pem   /etc/ssl/filebeat.pem
+        cp /certificates/wazuh.manager-key.pem /etc/ssl/filebeat.key
+        chmod 400 /etc/ssl/filebeat.key
+        exec /init
+
+  wazuh.indexer:
+    image: wazuh/wazuh-indexer:4.9.2
+    container_name: wazuh.indexer
+    hostname: wazuh.indexer
+    restart: always
+    user: root  # entrypoint lee /certificates (0500 root) y hace exec al opensearch
+    environment:
+      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    networks:
+      red_monitorizacion:
+        ipv4_address: 192.168.50.11
+    volumes:
+      - wazuh_indexer_data:/var/lib/wazuh-indexer
+      # (A) Certs desde volumen Docker nombrado
+      - wazuh_certs:/certificates:ro
+      - ./upstream/config/wazuh_indexer/wazuh.indexer.yml:/usr/share/wazuh-indexer/opensearch.yml
+      - ./upstream/config/wazuh_indexer/internal_users.yml:/usr/share/wazuh-indexer/opensearch-security/internal_users.yml
+    # Copia certs al path esperado y arranca
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        set -e
+        mkdir -p /usr/share/wazuh-indexer/certs
+        install -o wazuh-indexer -g wazuh-indexer -m 440 /certificates/root-ca.pem        /usr/share/wazuh-indexer/certs/root-ca.pem
+        install -o wazuh-indexer -g wazuh-indexer -m 440 /certificates/wazuh.indexer.pem  /usr/share/wazuh-indexer/certs/wazuh.indexer.pem
+        install -o wazuh-indexer -g wazuh-indexer -m 440 /certificates/wazuh.indexer-key.pem /usr/share/wazuh-indexer/certs/wazuh.indexer.key
+        install -o wazuh-indexer -g wazuh-indexer -m 440 /certificates/admin.pem          /usr/share/wazuh-indexer/certs/admin.pem
+        install -o wazuh-indexer -g wazuh-indexer -m 440 /certificates/admin-key.pem      /usr/share/wazuh-indexer/certs/admin-key.pem
+        exec /entrypoint.sh opensearchwrapper
+
+  wazuh.dashboard:
+    image: wazuh/wazuh-dashboard:4.9.2
+    container_name: wazuh.dashboard
+    hostname: wazuh.dashboard
+    restart: always
+    user: root  # entrypoint lee /certificates (0500 root) y hace exec al dashboard
+    ports:
+      - "5601:5601"
+    environment:
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=${INDEXER_PASSWORD:-CambiameFuerte-123}
+      - WAZUH_API_URL=https://wazuh.manager
+      - DASHBOARD_USERNAME=kibanaserver
+      - DASHBOARD_PASSWORD=${DASHBOARD_PASSWORD:-TerceraPass-789}
+      - API_USERNAME=wazuh-wui
+      - API_PASSWORD=${WAZUH_API_PASSWORD:-MyS3cr37P450r.*-}
+    networks:
+      red_monitorizacion:
+        ipv4_address: 192.168.50.12
+    volumes:
+      - wazuh_certs:/certificates:ro
+      - ./upstream/config/wazuh_dashboard/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml
+      - ./upstream/config/wazuh_dashboard/wazuh.yml:/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
+      - wazuh_dashboard_config:/usr/share/wazuh-dashboard/data/wazuh/config
+      - wazuh_dashboard_custom:/usr/share/wazuh-dashboard/plugins/wazuh/public/assets/custom
+    depends_on:
+      - wazuh.indexer
+    links:
+      - wazuh.indexer:wazuh.indexer
+      - wazuh.manager:wazuh.manager
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        set -e
+        mkdir -p /usr/share/wazuh-dashboard/certs
+        install -o wazuh-dashboard -g wazuh-dashboard -m 440 /certificates/wazuh.dashboard.pem     /usr/share/wazuh-dashboard/certs/wazuh-dashboard.pem
+        install -o wazuh-dashboard -g wazuh-dashboard -m 440 /certificates/wazuh.dashboard-key.pem /usr/share/wazuh-dashboard/certs/wazuh-dashboard-key.pem
+        install -o wazuh-dashboard -g wazuh-dashboard -m 440 /certificates/root-ca.pem             /usr/share/wazuh-dashboard/certs/root-ca.pem
+        # Dashboard no acepta correr como root por default; en lab necesitamos
+        # ser root solo para instalar los certs. Reemplazamos la llamada final
+        # del entrypoint oficial para añadir --allow-root.
+        yes | /usr/share/wazuh-dashboard/bin/opensearch-dashboards-keystore create --allow-root
+        echo $${DASHBOARD_USERNAME:-kibanaserver} | /usr/share/wazuh-dashboard/bin/opensearch-dashboards-keystore add opensearch.username --stdin --allow-root
+        echo $${DASHBOARD_PASSWORD:-kibanaserver} | /usr/share/wazuh-dashboard/bin/opensearch-dashboards-keystore add opensearch.password --stdin --allow-root
+        /wazuh_app_config.sh $$WAZUH_UI_REVISION 2>/dev/null || true
+        exec /usr/share/wazuh-dashboard/bin/opensearch-dashboards -c /usr/share/wazuh-dashboard/config/opensearch_dashboards.yml --allow-root
+
+networks:
+  red_monitorizacion:
+    external: true
+    name: tfm-purdue-scenarios_red_monitorizacion
+
+volumes:
+  wazuh_certs:
+    name: wazuh_certs       # mismo nombre que en generate-certs.yml -> compartido
+  wazuh_api_configuration:
+  wazuh_etc:
+  wazuh_logs:
+  wazuh_queue:
+  wazuh_var_multigroups:
+  wazuh_integrations:
+  wazuh_active_response:
+  wazuh_agentless:
+  wazuh_wodles:
+  filebeat_etc:
+  filebeat_var:
+  wazuh_indexer_data:
+  wazuh_dashboard_config:
+  wazuh_dashboard_custom:

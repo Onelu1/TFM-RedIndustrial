@@ -1,14 +1,7 @@
 #!/usr/bin/env python3
-"""
-Configuración centralizada del toolkit de ataques OT/ICS (TFM).
-
-Las IPs por defecto coinciden con las que genera `docker-compose.generated.yml`
-(ver tfm_simulacion/main.py -> generate_docker_compose). Pensado para ejecutarse
-DENTRO del contenedor `kali_nodo`, que ya tiene conectividad hacia las zonas OT
-a través de `router_gw`.
-
-Alcance: SOLO laboratorio local aislado (ver core/runner.py -> assert_lab_target).
-"""
+"""Configuración del toolkit de ataques: IPs y puertos por defecto del
+laboratorio, lectura del modo kali_nodo (empresa/control) y mapa MITRE
+ATT&CK for ICS por acción."""
 
 import os
 
@@ -120,4 +113,13 @@ MITRE_MAP = {
     "c2_modbus.shell": ["T0869", "T0807"],
     "c2_modbus.trigger_ot": ["T0869", "T0855", "T0836"],
     "c2_modbus.exfil_response": ["T0869", "T0882"],
+
+    # Ataques L2 para disparar Wazuh 100310 (allowlist MAC)
+    "mac_spoof.mac_change": ["T0849", "T1036"],
+    "mac_spoof.arp_spoof":  ["T0859", "T1557"],
+
+    # Valor Modbus fuera de rango (Wazuh 100410)
+    "modbus.write_outlier": ["T0836", "T0831"],
+    # Valor DNP3 analogico fuera de rango (Wazuh 100410)
+    "dnp3.write_analog_outlier": ["T0836", "T0831"],
 }

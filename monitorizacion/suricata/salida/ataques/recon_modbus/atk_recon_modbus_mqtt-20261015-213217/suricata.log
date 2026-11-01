@@ -1,0 +1,48 @@
+[1 - Suricata-Main] 2026-10-16 11:37:19 Notice: suricata: This is Suricata version 8.0.7 RELEASE running in USER mode
+[1 - Suricata-Main] 2026-10-16 11:37:19 Info: cpu: CPUs/cores online: 20
+[1 - Suricata-Main] 2026-10-16 11:37:19 Info: suricata: Setting engine mode to IDS mode by default
+[1 - Suricata-Main] 2026-10-16 11:37:19 Info: suricata: No 'host-mode': suricata is in IDS mode, using default setting 'sniffer-only'
+[1 - Suricata-Main] 2026-10-16 11:37:19 Notice: stream-tcp: stream.reassembly.depth set to unlimited by default
+[1 - Suricata-Main] 2026-10-16 11:37:19 Info: logopenfile: eve-log output device (regular) initialized: eve.json
+[1 - Suricata-Main] 2026-10-16 11:37:19 Info: detect: 1 rule files processed. 22 rules successfully loaded, 0 rules failed, 0 rules skipped
+[1 - Suricata-Main] 2026-10-16 11:37:19 Info: threshold-config: Threshold config parsed: 0 rule(s) found
+[1 - Suricata-Main] 2026-10-16 11:37:19 Info: detect: 22 signatures processed. 2 are IP-only rules, 1 are inspecting packet payload, 13 inspect application layer, 0 are decoder event only
+[12 - RX#01] 2026-10-16 11:37:19 Info: pcap: Starting file run for /pcaps/atk_recon_modbus_mqtt-20261015-213217.pcap
+[1 - Suricata-Main] 2026-10-16 11:37:19 Notice: threads: Threads created -> RX: 1 W: 20 FM: 1 FR: 1   Engine started.
+[12 - RX#01] 2026-10-16 11:37:19 Info: pcap: pcap file /pcaps/atk_recon_modbus_mqtt-20261015-213217.pcap end of file reached (pcap err code 0)
+[1 - Suricata-Main] 2026-10-16 11:37:19 Notice: suricata: Signal Received.  Stopping engine.
+[1 - Suricata-Main] 2026-10-16 11:37:19 Info: suricata: time elapsed 0.146s
+[12 - RX#01] 2026-10-16 11:37:19 Notice: pcap: read 1 file, 1326 packets, 207892 bytes
+[1 - Suricata-Main] 2026-10-16 11:37:19 Info: counters: Alerts: 0
+[1 - Suricata-Main] 2026-10-16 23:01:31 Notice: suricata: This is Suricata version 8.0.7 RELEASE running in USER mode
+[1 - Suricata-Main] 2026-10-16 23:01:31 Info: cpu: CPUs/cores online: 20
+[1 - Suricata-Main] 2026-10-16 23:01:31 Info: suricata: Setting engine mode to IDS mode by default
+[1 - Suricata-Main] 2026-10-16 23:01:31 Info: suricata: No 'host-mode': suricata is in IDS mode, using default setting 'sniffer-only'
+[1 - Suricata-Main] 2026-10-16 23:01:31 Notice: stream-tcp: stream.reassembly.depth set to unlimited by default
+[1 - Suricata-Main] 2026-10-16 23:01:31 Info: logopenfile: eve-log output device (regular) initialized: eve.json
+[1 - Suricata-Main] 2026-10-16 23:01:31 Info: detect: 1 rule files processed. 22 rules successfully loaded, 0 rules failed, 0 rules skipped
+[1 - Suricata-Main] 2026-10-16 23:01:31 Info: threshold-config: Threshold config parsed: 0 rule(s) found
+[1 - Suricata-Main] 2026-10-16 23:01:31 Info: detect: 22 signatures processed. 2 are IP-only rules, 1 are inspecting packet payload, 13 inspect application layer, 0 are decoder event only
+[13 - RX#01] 2026-10-16 23:01:31 Info: pcap: Starting file run for /pcaps/atk_recon_modbus_mqtt-20261015-213217.pcap
+[1 - Suricata-Main] 2026-10-16 23:01:31 Notice: threads: Threads created -> RX: 1 W: 20 FM: 1 FR: 1   Engine started.
+[13 - RX#01] 2026-10-16 23:01:31 Info: pcap: pcap file /pcaps/atk_recon_modbus_mqtt-20261015-213217.pcap end of file reached (pcap err code 0)
+[1 - Suricata-Main] 2026-10-16 23:01:31 Notice: suricata: Signal Received.  Stopping engine.
+[1 - Suricata-Main] 2026-10-16 23:01:31 Info: suricata: time elapsed 0.170s
+[13 - RX#01] 2026-10-16 23:01:31 Notice: pcap: read 1 file, 1326 packets, 207892 bytes
+[1 - Suricata-Main] 2026-10-16 23:01:31 Info: counters: Alerts: 0
+[1 - Suricata-Main] 2026-10-17 20:51:56 Notice: suricata: This is Suricata version 8.0.7 RELEASE running in USER mode
+[1 - Suricata-Main] 2026-10-17 20:51:56 Info: cpu: CPUs/cores online: 20
+[1 - Suricata-Main] 2026-10-17 20:51:56 Info: suricata: Setting engine mode to IDS mode by default
+[1 - Suricata-Main] 2026-10-17 20:51:56 Info: suricata: No 'host-mode': suricata is in IDS mode, using default setting 'sniffer-only'
+[1 - Suricata-Main] 2026-10-17 20:51:56 Notice: stream-tcp: stream.reassembly.depth set to unlimited by default
+[1 - Suricata-Main] 2026-10-17 20:51:56 Info: logopenfile: eve-log output device (regular) initialized: eve.json
+[1 - Suricata-Main] 2026-10-17 20:51:56 Info: detect: 1 rule files processed. 22 rules successfully loaded, 0 rules failed, 0 rules skipped
+[1 - Suricata-Main] 2026-10-17 20:51:56 Info: threshold-config: Threshold config parsed: 0 rule(s) found
+[1 - Suricata-Main] 2026-10-17 20:51:56 Info: detect: 22 signatures processed. 2 are IP-only rules, 1 are inspecting packet payload, 13 inspect application layer, 0 are decoder event only
+[12 - RX#01] 2026-10-17 20:51:56 Info: pcap: Starting file run for /pcaps/atk_recon_modbus_mqtt-20261015-213217.pcap
+[1 - Suricata-Main] 2026-10-17 20:51:56 Notice: threads: Threads created -> RX: 1 W: 20 FM: 1 FR: 1   Engine started.
+[12 - RX#01] 2026-10-17 20:51:56 Info: pcap: pcap file /pcaps/atk_recon_modbus_mqtt-20261015-213217.pcap end of file reached (pcap err code 0)
+[1 - Suricata-Main] 2026-10-17 20:51:56 Notice: suricata: Signal Received.  Stopping engine.
+[1 - Suricata-Main] 2026-10-17 20:51:56 Info: suricata: time elapsed 0.111s
+[12 - RX#01] 2026-10-17 20:51:56 Notice: pcap: read 1 file, 1326 packets, 207892 bytes
+[1 - Suricata-Main] 2026-10-17 20:51:56 Info: counters: Alerts: 0

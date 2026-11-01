@@ -1,23 +1,8 @@
 #!/usr/bin/env python3
-"""Entrypoint CLI del laboratorio OT/ICS (TFM — modelo Purdue / ISA-95).
+"""Orquestador CLI del laboratorio OT/ICS (modelo Purdue). La lógica vive en
+el paquete `scenario/`; este fichero solo lanza el menú y reexporta los
+nombres públicos que consume la receta manual del README de `ataques/`."""
 
-Toda la lógica vive ahora en el paquete `scenario/`:
-
-- `scenario.shell`         — utilidad `run_cmd`.
-- `scenario.docker_images` — build de imágenes Docker locales.
-- `scenario.samba`         — pivote vulnerable (claves SSH + share).
-- `scenario.compose`       — `docker-compose.generated.yml`, ACLs, `.mode`.
-- `scenario.nodered_flow`  — flow SCADA Node-RED.
-- `scenario.deploy`        — orquestación end-to-end + cambio de modo kali.
-- `scenario.menu`          — menú interactivo `[0-7]`.
-
-Mantengo re-exportados los nombres públicos que la receta manual del README de
-`ataques/` consume (p. ej. `main.generate_docker_compose(3, 3, 3, kali_mode='control')`),
-para no romper esa documentación tras la refactorización.
-"""
-
-# Compatibilidad: `python -c "import main; main.generate_docker_compose(...)"` y
-# cualquier otro import previo que apuntara a `main.<símbolo>` sigue funcionando.
 from scenario.compose import (  # noqa: F401
     generate_docker_compose,
     read_scenario_sizes,

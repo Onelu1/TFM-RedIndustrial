@@ -1,0 +1,17 @@
+[1 - Suricata-Main] 2026-10-24 14:28:03 Notice: suricata: This is Suricata version 8.0.7 RELEASE running in USER mode
+[1 - Suricata-Main] 2026-10-24 14:28:03 Info: cpu: CPUs/cores online: 20
+[1 - Suricata-Main] 2026-10-24 14:28:03 Info: suricata: Setting engine mode to IDS mode by default
+[1 - Suricata-Main] 2026-10-24 14:28:03 Info: suricata: No 'host-mode': suricata is in IDS mode, using default setting 'sniffer-only'
+[1 - Suricata-Main] 2026-10-24 14:28:03 Notice: stream-tcp: stream.reassembly.depth set to unlimited by default
+[1 - Suricata-Main] 2026-10-24 14:28:03 Info: logopenfile: eve-log output device (regular) initialized: eve.json
+[1 - Suricata-Main] 2026-10-24 14:28:03 Info: output-json-dnp3: DNP3 log sub-module initialized.
+[1 - Suricata-Main] 2026-10-24 14:28:03 Info: detect: 1 rule files processed. 25 rules successfully loaded, 0 rules failed, 0 rules skipped
+[1 - Suricata-Main] 2026-10-24 14:28:03 Info: threshold-config: Threshold config parsed: 0 rule(s) found
+[1 - Suricata-Main] 2026-10-24 14:28:03 Info: detect: 25 signatures processed. 2 are IP-only rules, 1 are inspecting packet payload, 13 inspect application layer, 0 are decoder event only
+[12 - RX#01] 2026-10-24 14:28:03 Info: pcap: Starting file run for /pcaps/atk_dnp3_outlier_dnp3_1-20261024-162715.pcap
+[1 - Suricata-Main] 2026-10-24 14:28:03 Notice: threads: Threads created -> RX: 1 W: 20 FM: 1 FR: 1   Engine started.
+[12 - RX#01] 2026-10-24 14:28:03 Info: pcap: pcap file /pcaps/atk_dnp3_outlier_dnp3_1-20261024-162715.pcap end of file reached (pcap err code 0)
+[1 - Suricata-Main] 2026-10-24 14:28:03 Notice: suricata: Signal Received.  Stopping engine.
+[1 - Suricata-Main] 2026-10-24 14:28:03 Info: suricata: time elapsed 0.155s
+[12 - RX#01] 2026-10-24 14:28:03 Notice: pcap: read 1 file, 288 packets, 36633 bytes
+[1 - Suricata-Main] 2026-10-24 14:28:03 Info: counters: Alerts: 0

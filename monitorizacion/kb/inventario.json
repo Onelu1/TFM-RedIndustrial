@@ -1,0 +1,504 @@
+{
+  "version": 1,
+  "metadata": {
+    "generated_at": "2026-10-22T13:23:09.436403+00:00",
+    "training_window": {
+      "start": "2026-10-16T07:50:19.907000+00:00",
+      "end": "2026-10-22T11:04:37.341000+00:00",
+      "duration_seconds": 300
+    },
+    "source_files": [
+      "baseline_control-20261016-114414",
+      "baseline_control-20261021-152139",
+      "baseline_control-20261021-180350",
+      "baseline_control-20261022-123153",
+      "baseline_control-20261022-145917",
+      "baseline_dnp3-20261016-114414",
+      "baseline_dnp3-20261021-152139",
+      "baseline_dnp3_1-20261021-180350",
+      "baseline_dnp3_1-20261022-123153",
+      "baseline_dnp3_1-20261022-145917",
+      "baseline_dnp3_2-20261021-180350",
+      "baseline_dnp3_2-20261022-123153",
+      "baseline_dnp3_2-20261022-145917",
+      "baseline_dnp3_3-20261021-180350",
+      "baseline_dnp3_3-20261022-123153",
+      "baseline_dnp3_3-20261022-145917",
+      "baseline_dnp3_4-20261021-180350",
+      "baseline_dnp3_4-20261022-123153",
+      "baseline_dnp3_4-20261022-145917",
+      "baseline_mqtt-20261016-114414",
+      "baseline_mqtt-20261021-152139",
+      "baseline_mqtt-20261021-180350",
+      "baseline_mqtt-20261022-123153",
+      "baseline_mqtt-20261022-145917"
+    ],
+    "n_capture_points": 24,
+    "n_flujos_leidos": 418,
+    "n_flujos_tras_dedup": 362,
+    "n_flujos_descartados_254": 46,
+    "n_flujos_ipv6_descartados": 0,
+    "n_flujos_excluidos_kali": 0,
+    "n_ips_vistas": 22,
+    "n_ips_silentes": 5,
+    "n_candidatas_scada": 1,
+    "excluded_hosts": [
+      "192.168.20.66"
+    ],
+    "umbrales_usados": {
+      "broker_min_peers": 2,
+      "broker_min_flujos": 10,
+      "scada_min_puertos_ot": 3,
+      "scada_min_peers_out": 3,
+      "scada_stdev_polling": 1.0,
+      "plc_min_flujos_in": 1,
+      "modbus_max_bytes_mean": 300
+    }
+  },
+  "hosts": {
+    "192.168.10.10": {
+      "rol": "plc_modbus",
+      "confianza": "media",
+      "subnet": "red_ot_zona_a",
+      "docker_name_hint": "plc_agua_1",
+      "dual_homed_as": null,
+      "evidencias": [
+        "escucha :502/TCP, 20 flujos entrantes de 1 peer(s)",
+        "subnet=red_ot_zona_a (esperada para PLC Modbus)"
+      ],
+      "listens_on": {
+        "502": 1
+      },
+      "connects_to": {},
+      "n_flujos_in": 20,
+      "n_flujos_out": 0
+    },
+    "192.168.10.11": {
+      "rol": "plc_modbus",
+      "confianza": "media",
+      "subnet": "red_ot_zona_a",
+      "docker_name_hint": "plc_agua_2",
+      "dual_homed_as": null,
+      "evidencias": [
+        "escucha :502/TCP, 20 flujos entrantes de 1 peer(s)",
+        "subnet=red_ot_zona_a (esperada para PLC Modbus)"
+      ],
+      "listens_on": {
+        "502": 1
+      },
+      "connects_to": {},
+      "n_flujos_in": 20,
+      "n_flujos_out": 0
+    },
+    "192.168.10.12": {
+      "rol": "plc_modbus",
+      "confianza": "media",
+      "subnet": "red_ot_zona_a",
+      "docker_name_hint": "plc_agua_3",
+      "dual_homed_as": null,
+      "evidencias": [
+        "escucha :502/TCP, 20 flujos entrantes de 1 peer(s)",
+        "subnet=red_ot_zona_a (esperada para PLC Modbus)"
+      ],
+      "listens_on": {
+        "502": 1
+      },
+      "connects_to": {},
+      "n_flujos_in": 20,
+      "n_flujos_out": 0
+    },
+    "192.168.10.13": {
+      "rol": "plc_modbus",
+      "confianza": "media",
+      "subnet": "red_ot_zona_a",
+      "docker_name_hint": "plc_agua_4",
+      "dual_homed_as": null,
+      "evidencias": [
+        "escucha :502/TCP, 6 flujos entrantes de 1 peer(s)",
+        "subnet=red_ot_zona_a (esperada para PLC Modbus)"
+      ],
+      "listens_on": {
+        "502": 1
+      },
+      "connects_to": {},
+      "n_flujos_in": 6,
+      "n_flujos_out": 0
+    },
+    "192.168.20.10": {
+      "rol": "scada",
+      "confianza": "media",
+      "subnet": "red_control",
+      "docker_name_hint": "nodered_scada_1",
+      "dual_homed_as": null,
+      "evidencias": [
+        "cliente de [102, 502, 1883], fan-out=9 peers",
+        "subnet=red_control (esperada para SCADA)"
+      ],
+      "listens_on": {},
+      "connects_to": {
+        "102": 4,
+        "502": 4,
+        "1883": 1
+      },
+      "n_flujos_in": 0,
+      "n_flujos_out": 166
+    },
+    "192.168.20.15": {
+      "rol": "broker_mqtt",
+      "confianza": "alta",
+      "subnet": "red_control",
+      "docker_name_hint": "broker_mqtt",
+      "dual_homed_as": null,
+      "evidencias": [
+        "escucha :1883/TCP, 5 clientes distintos (184 flujos entrantes)",
+        "subnet=red_control (esperada para broker MQTT)",
+        "5 publicadores >=3"
+      ],
+      "listens_on": {
+        "1883": 5
+      },
+      "connects_to": {},
+      "n_flujos_in": 184,
+      "n_flujos_out": 0
+    },
+    "192.168.20.16": {
+      "rol": "gateway_dnp3",
+      "confianza": "media",
+      "subnet": "red_control",
+      "docker_name_hint": "gateway_dnp3_1",
+      "dual_homed_as": "192.168.40.16",
+      "evidencias": [
+        "visto en flujos pero ninguna regla aplico",
+        "rol heredado de la pata dual-homed 192.168.40.16 (gateway_dnp3)"
+      ],
+      "listens_on": {},
+      "connects_to": {
+        "1883": 1
+      },
+      "n_flujos_in": 0,
+      "n_flujos_out": 58
+    },
+    "192.168.20.17": {
+      "rol": "gateway_dnp3",
+      "confianza": "media",
+      "subnet": "red_control",
+      "docker_name_hint": "gateway_dnp3_2",
+      "dual_homed_as": "192.168.40.17",
+      "evidencias": [
+        "visto en flujos pero ninguna regla aplico",
+        "rol heredado de la pata dual-homed 192.168.40.17 (gateway_dnp3)"
+      ],
+      "listens_on": {},
+      "connects_to": {
+        "1883": 1
+      },
+      "n_flujos_in": 0,
+      "n_flujos_out": 38
+    },
+    "192.168.20.18": {
+      "rol": "gateway_dnp3",
+      "confianza": "media",
+      "subnet": "red_control",
+      "docker_name_hint": "gateway_dnp3_3",
+      "dual_homed_as": "192.168.40.18",
+      "evidencias": [
+        "visto en flujos pero ninguna regla aplico",
+        "rol heredado de la pata dual-homed 192.168.40.18 (gateway_dnp3)"
+      ],
+      "listens_on": {},
+      "connects_to": {
+        "1883": 1
+      },
+      "n_flujos_in": 0,
+      "n_flujos_out": 38
+    },
+    "192.168.20.19": {
+      "rol": "gateway_dnp3",
+      "confianza": "media",
+      "subnet": "red_control",
+      "docker_name_hint": "gateway_dnp3_4",
+      "dual_homed_as": "192.168.40.19",
+      "evidencias": [
+        "visto en flujos pero ninguna regla aplico",
+        "rol heredado de la pata dual-homed 192.168.40.19 (gateway_dnp3)"
+      ],
+      "listens_on": {},
+      "connects_to": {
+        "1883": 1
+      },
+      "n_flujos_in": 0,
+      "n_flujos_out": 16
+    },
+    "192.168.30.10": {
+      "rol": "plc_s7",
+      "confianza": "media",
+      "subnet": "red_ot_zona_b",
+      "docker_name_hint": "plc_s7_1",
+      "dual_homed_as": null,
+      "evidencias": [
+        "escucha :102/TCP, 20 flujos entrantes de 1 peer(s)",
+        "subnet=red_ot_zona_b (esperada para PLC S7)"
+      ],
+      "listens_on": {
+        "102": 1
+      },
+      "connects_to": {},
+      "n_flujos_in": 20,
+      "n_flujos_out": 0
+    },
+    "192.168.30.11": {
+      "rol": "plc_s7",
+      "confianza": "media",
+      "subnet": "red_ot_zona_b",
+      "docker_name_hint": "plc_s7_2",
+      "dual_homed_as": null,
+      "evidencias": [
+        "escucha :102/TCP, 20 flujos entrantes de 1 peer(s)",
+        "subnet=red_ot_zona_b (esperada para PLC S7)"
+      ],
+      "listens_on": {
+        "102": 1
+      },
+      "connects_to": {},
+      "n_flujos_in": 20,
+      "n_flujos_out": 0
+    },
+    "192.168.30.12": {
+      "rol": "plc_s7",
+      "confianza": "media",
+      "subnet": "red_ot_zona_b",
+      "docker_name_hint": "plc_s7_3",
+      "dual_homed_as": null,
+      "evidencias": [
+        "escucha :102/TCP, 20 flujos entrantes de 1 peer(s)",
+        "subnet=red_ot_zona_b (esperada para PLC S7)"
+      ],
+      "listens_on": {
+        "102": 1
+      },
+      "connects_to": {},
+      "n_flujos_in": 20,
+      "n_flujos_out": 0
+    },
+    "192.168.30.13": {
+      "rol": "plc_s7",
+      "confianza": "media",
+      "subnet": "red_ot_zona_b",
+      "docker_name_hint": "plc_s7_4",
+      "dual_homed_as": null,
+      "evidencias": [
+        "escucha :102/TCP, 6 flujos entrantes de 1 peer(s)",
+        "subnet=red_ot_zona_b (esperada para PLC S7)"
+      ],
+      "listens_on": {
+        "102": 1
+      },
+      "connects_to": {},
+      "n_flujos_in": 6,
+      "n_flujos_out": 0
+    },
+    "192.168.40.10": {
+      "rol": "plc_dnp3",
+      "confianza": "media",
+      "subnet": "red_ot_zona_c",
+      "docker_name_hint": "plc_dnp3_1",
+      "dual_homed_as": null,
+      "evidencias": [
+        "escucha :20000/TCP, 28 flujos entrantes de 1 peer(s)",
+        "subnet=red_ot_zona_c (esperada para PLC DNP3)"
+      ],
+      "listens_on": {
+        "20000": 1
+      },
+      "connects_to": {},
+      "n_flujos_in": 28,
+      "n_flujos_out": 0
+    },
+    "192.168.40.11": {
+      "rol": "plc_dnp3",
+      "confianza": "media",
+      "subnet": "red_ot_zona_c",
+      "docker_name_hint": "plc_dnp3_2",
+      "dual_homed_as": null,
+      "evidencias": [
+        "escucha :20000/TCP, 6 flujos entrantes de 1 peer(s)",
+        "subnet=red_ot_zona_c (esperada para PLC DNP3)"
+      ],
+      "listens_on": {
+        "20000": 1
+      },
+      "connects_to": {},
+      "n_flujos_in": 6,
+      "n_flujos_out": 0
+    },
+    "192.168.40.12": {
+      "rol": "plc_dnp3",
+      "confianza": "media",
+      "subnet": "red_ot_zona_c",
+      "docker_name_hint": "plc_dnp3_3",
+      "dual_homed_as": null,
+      "evidencias": [
+        "escucha :20000/TCP, 6 flujos entrantes de 1 peer(s)",
+        "subnet=red_ot_zona_c (esperada para PLC DNP3)"
+      ],
+      "listens_on": {
+        "20000": 1
+      },
+      "connects_to": {},
+      "n_flujos_in": 6,
+      "n_flujos_out": 0
+    },
+    "192.168.40.13": {
+      "rol": "plc_dnp3",
+      "confianza": "media",
+      "subnet": "red_ot_zona_c",
+      "docker_name_hint": "plc_dnp3_4",
+      "dual_homed_as": null,
+      "evidencias": [
+        "escucha :20000/TCP, 6 flujos entrantes de 1 peer(s)",
+        "subnet=red_ot_zona_c (esperada para PLC DNP3)"
+      ],
+      "listens_on": {
+        "20000": 1
+      },
+      "connects_to": {},
+      "n_flujos_in": 6,
+      "n_flujos_out": 0
+    },
+    "192.168.40.16": {
+      "rol": "gateway_dnp3",
+      "confianza": "alta",
+      "subnet": "red_ot_zona_c",
+      "docker_name_hint": "gateway_dnp3_1",
+      "dual_homed_as": "192.168.20.16",
+      "evidencias": [
+        "cliente DNP3 (:20000) a 1 PLC(s)",
+        "subnet=red_ot_zona_c (esperada para gateway DNP3)",
+        "1 PLC DNP3 asignado (patron maestro dedicado)"
+      ],
+      "listens_on": {},
+      "connects_to": {
+        "20000": 1
+      },
+      "n_flujos_in": 0,
+      "n_flujos_out": 28
+    },
+    "192.168.40.17": {
+      "rol": "gateway_dnp3",
+      "confianza": "alta",
+      "subnet": "red_ot_zona_c",
+      "docker_name_hint": "gateway_dnp3_2",
+      "dual_homed_as": "192.168.20.17",
+      "evidencias": [
+        "cliente DNP3 (:20000) a 1 PLC(s)",
+        "subnet=red_ot_zona_c (esperada para gateway DNP3)",
+        "1 PLC DNP3 asignado (patron maestro dedicado)"
+      ],
+      "listens_on": {},
+      "connects_to": {
+        "20000": 1
+      },
+      "n_flujos_in": 0,
+      "n_flujos_out": 6
+    },
+    "192.168.40.18": {
+      "rol": "gateway_dnp3",
+      "confianza": "alta",
+      "subnet": "red_ot_zona_c",
+      "docker_name_hint": "gateway_dnp3_3",
+      "dual_homed_as": "192.168.20.18",
+      "evidencias": [
+        "cliente DNP3 (:20000) a 1 PLC(s)",
+        "subnet=red_ot_zona_c (esperada para gateway DNP3)",
+        "1 PLC DNP3 asignado (patron maestro dedicado)"
+      ],
+      "listens_on": {},
+      "connects_to": {
+        "20000": 1
+      },
+      "n_flujos_in": 0,
+      "n_flujos_out": 6
+    },
+    "192.168.40.19": {
+      "rol": "gateway_dnp3",
+      "confianza": "alta",
+      "subnet": "red_ot_zona_c",
+      "docker_name_hint": "gateway_dnp3_4",
+      "dual_homed_as": "192.168.20.19",
+      "evidencias": [
+        "cliente DNP3 (:20000) a 1 PLC(s)",
+        "subnet=red_ot_zona_c (esperada para gateway DNP3)",
+        "1 PLC DNP3 asignado (patron maestro dedicado)"
+      ],
+      "listens_on": {},
+      "connects_to": {
+        "20000": 1
+      },
+      "n_flujos_in": 0,
+      "n_flujos_out": 6
+    }
+  },
+  "silent_hosts": [
+    {
+      "ip": "192.168.20.50",
+      "esperado_nombre": "srv_empresa",
+      "motivo": "sin flujos en la ventana de entrenamiento"
+    },
+    {
+      "ip": "192.168.50.10",
+      "esperado_nombre": "wazuh.manager",
+      "motivo": "sin flujos en la ventana de entrenamiento"
+    },
+    {
+      "ip": "192.168.50.11",
+      "esperado_nombre": "wazuh.indexer",
+      "motivo": "sin flujos en la ventana de entrenamiento"
+    },
+    {
+      "ip": "192.168.50.12",
+      "esperado_nombre": "wazuh.dashboard",
+      "motivo": "sin flujos en la ventana de entrenamiento"
+    },
+    {
+      "ip": "192.168.60.50",
+      "esperado_nombre": "srv_empresa",
+      "motivo": "sin flujos en la ventana de entrenamiento"
+    }
+  ],
+  "role_index": {
+    "plc_modbus": [
+      "192.168.10.10",
+      "192.168.10.11",
+      "192.168.10.12",
+      "192.168.10.13"
+    ],
+    "scada": [
+      "192.168.20.10"
+    ],
+    "broker_mqtt": [
+      "192.168.20.15"
+    ],
+    "gateway_dnp3": [
+      "192.168.20.16",
+      "192.168.20.17",
+      "192.168.20.18",
+      "192.168.20.19",
+      "192.168.40.16",
+      "192.168.40.17",
+      "192.168.40.18",
+      "192.168.40.19"
+    ],
+    "plc_s7": [
+      "192.168.30.10",
+      "192.168.30.11",
+      "192.168.30.12",
+      "192.168.30.13"
+    ],
+    "plc_dnp3": [
+      "192.168.40.10",
+      "192.168.40.11",
+      "192.168.40.12",
+      "192.168.40.13"
+    ]
+  }
+}

@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""
-Gestión de evidencias: cada ejecución de un ataque se guarda en un fichero de log
-con timestamp, listo para adjuntarse como captura en la memoria del TFM.
-"""
+"""Ficheros de evidencia por ejecución: ruta con timestamp y cabecera MITRE."""
 
 import os
 import datetime

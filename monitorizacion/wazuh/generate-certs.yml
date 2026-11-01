@@ -1,0 +1,22 @@
+# Genera los certificados SSL de Wazuh en un volumen Docker nombrado
+# `wazuh_certs`, no en bind-mount Windows (evita el bug Java SecurityManager
+# + Docker Desktop Windows).
+#
+# Uso (una sola vez antes del primer `docker compose up -d`):
+#   docker compose -f generate-certs.yml run --rm generator
+#
+# Después, el `docker-compose.yml` principal monta `wazuh_certs:/certificates:ro`
+# en los 3 contenedores Wazuh, y cada uno copia los suyos a los paths
+# esperados en su entrypoint.
+
+services:
+  generator:
+    image: wazuh/wazuh-certs-generator:0.0.2
+    hostname: wazuh-certs-generator
+    volumes:
+      - wazuh_certs:/certificates
+      - ./upstream/config/certs.yml:/config/certs.yml:ro
+
+volumes:
+  wazuh_certs:          # el mismo volumen que montará el stack principal
+    name: wazuh_certs

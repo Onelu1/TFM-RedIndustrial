@@ -52,3 +52,14 @@ escenario antiguo/
 !tests/fixtures/
 !tests/fixtures/**
 
+
+# ---------------------------------------------------------------
+# Logs de ejecución pesados del pipeline de monitorización
+# (regenerables y por encima del límite de 100 MB de GitHub)
+# ---------------------------------------------------------------
+monitorizacion/suricata/salida/live/
+monitorizacion/suricata/salida/_tmp/
+monitorizacion/wazuh/all_eve.json
+
+# Archivo temporal vacío
+/1

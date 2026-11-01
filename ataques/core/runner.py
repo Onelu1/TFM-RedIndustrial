@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
-"""
-Ejecución de comandos/funciones con captura de salida en vivo + escritura a
-fichero de evidencia. Incluye una guarda de seguridad (`assert_lab_target`) que
-impide lanzar ataques contra IPs que no pertenezcan al laboratorio local.
-"""
+"""Ejecutor de subprocesos (streaming a evidencia) y guarda de alcance
+(`assert_lab_target`) que rechaza IPs fuera del laboratorio."""
 
 import ipaddress
 import socket

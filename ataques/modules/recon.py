@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
-"""
-Módulo de reconocimiento (Discovery) para las tres zonas OT.
-Reproduce los escaneos nmap documentados en el PDF del TFM.
-
-MITRE ATT&CK for ICS:
-  - T0846 Remote System Discovery
-  - T0888 Remote System Information Discovery
-"""
+"""Reconocimiento (nmap) para las tres zonas OT (Modbus / S7 / DNP3)."""
 
 import config
 from core import runner, evidence

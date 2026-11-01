@@ -1,0 +1,260 @@
+<!--
+    local_rules.xml - Reglas Wazuh del TFM.
+
+    Dos grupos:
+      (A) Ingesta directa de Suricata (grupo oficial 0800):
+          Wazuh ya decodifica eve.json; aqui solo relevamos severidad
+          y enriquecemos con etiquetas MITRE ICS cuando el msg empieza
+          por "TFM ...". Esto correlaciona reglas Suricata (sid 2000xxx)
+          con nuestras reglas Wazuh (100xxx).
+
+      (B) Alertas sobre FLUJOS IPFIX (allowlisting puro, derivado de la KB):
+          se comparan los campos sourceIPv4Address / destinationIPv4Address
+          / destinationTransportPort / protocolIdentifier contra la lista
+          CDB comunicaciones_ok. Si no esta, es flujo nuevo = sospechoso.
+
+    Rango de SIDs locales: 100000-109999 (reservado Wazuh para locales).
+-->
+<group name="tfm,ot_ics,">
+
+  <!-- =====================================================================
+       (A) Correlacion con alertas Suricata TFM (eve.json)
+       ===================================================================== -->
+  <rule id="100100" level="10">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature">^TFM OT:</field>
+    <description>TFM/Suricata: violacion de politica OT - $(alert.signature)</description>
+    <group>mitre,policy_violation,</group>
+    <mitre>
+      <id>T0846</id>
+    </mitre>
+  </rule>
+
+  <rule id="100101" level="12">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature">^TFM C2 FrostyGoop</field>
+    <description>TFM/Suricata: canal C2 FrostyGoop detectado - $(alert.signature)</description>
+    <group>mitre,c2,frostygoop,</group>
+    <mitre>
+      <id>T0869</id>
+      <id>T1570</id>
+    </mitre>
+  </rule>
+
+  <rule id="100102" level="12">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature">^TFM OpenPLC:</field>
+    <description>TFM/Suricata: RCE OpenPLC - $(alert.signature)</description>
+    <group>mitre,rce,plc,</group>
+    <mitre>
+      <id>T0843</id>
+      <id>T0831</id>
+    </mitre>
+  </rule>
+
+  <rule id="100103" level="10">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature">^TFM Pivote:</field>
+    <description>TFM/Suricata: pivote IT-OT detectado - $(alert.signature)</description>
+    <group>mitre,lateral_movement,</group>
+    <mitre>
+      <id>T1078.003</id>
+      <id>T1090</id>
+    </mitre>
+  </rule>
+
+  <rule id="100104" level="9">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature">^TFM Recon:</field>
+    <description>TFM/Suricata: reconocimiento OT - $(alert.signature)</description>
+    <group>mitre,recon,</group>
+    <mitre>
+      <id>T0846</id>
+      <id>T0888</id>
+    </mitre>
+  </rule>
+
+  <!-- =====================================================================
+       (B) Allowlist sobre flujos IPFIX
+           Formato de clave en comunicaciones_ok.cdb:
+             "<sip>-><dip>:<dport>/<proto>"
+           Se compone con una regla previa que concatena los campos del flujo
+           en un unico campo artificial, y la hija consulta la lista.
+       ===================================================================== -->
+  <rule id="100200" level="0">
+    <decoded_as>tfm-flujos-ipfix-campos</decoded_as>
+    <description>TFM/Flujos: flujo IPFIX recibido (base)</description>
+  </rule>
+
+  <!-- Compone la clave de busqueda y la mete en data.tfm.conn_key -->
+  <rule id="100201" level="0">
+    <if_sid>100200</if_sid>
+    <field name="sourceIPv4Address" type="pcre2">\S+</field>
+    <field name="destinationIPv4Address" type="pcre2">\S+</field>
+    <field name="destinationTransportPort" type="pcre2">\d+</field>
+    <field name="protocolIdentifier" type="pcre2">\d+</field>
+    <description>TFM/Flujos: metadatos del flujo decodificados</description>
+  </rule>
+
+  <!-- Si el flujo NO esta en la allowlist -> alerta de "comunicacion nueva".
+       Se usa un negado contra la lista CDB; el valor "ok" en el .cdb basta. -->
+  <rule id="100210" level="10">
+    <if_sid>100201</if_sid>
+    <list field="data.tfm.conn_key" lookup="match_key_value">etc/lists/tfm/comunicaciones_ok</list>
+    <!-- La semantica "match"/"no match" se controla desde la lista; aqui
+         marcamos solo cuando el lookup NO devuelve 'ok'. -->
+    <description>TFM/Flujos: comunicacion fuera de la allowlist ($(sourceIPv4Address) -> $(destinationIPv4Address):$(destinationTransportPort))</description>
+    <group>mitre,anomaly,ipfix,</group>
+    <mitre>
+      <id>T0846</id>
+    </mitre>
+  </rule>
+
+  <!-- Flujo con origen en red empresa hacia puertos OT (502/102/20000) -->
+  <rule id="100220" level="12">
+    <if_sid>100201</if_sid>
+    <field name="sourceIPv4Address" type="pcre2">^192\.168\.60\.</field>
+    <field name="destinationTransportPort" type="pcre2">^(502|102|20000)$</field>
+    <description>TFM/Flujos: pivote detectado por FLUJO - origen enterprise hacia OT</description>
+    <group>mitre,lateral_movement,ipfix,</group>
+    <mitre>
+      <id>T0866</id>
+      <id>T1046</id>
+    </mitre>
+  </rule>
+
+  <!-- Beaconing al buzon C2 FrostyGoop (plc_agua_2:502) desde no SCADA -->
+  <rule id="100230" level="12">
+    <if_sid>100201</if_sid>
+    <field name="destinationIPv4Address" type="pcre2">^192\.168\.10\.11$</field>
+    <field name="destinationTransportPort" type="pcre2">^502$</field>
+    <field name="sourceIPv4Address" negate="yes" type="pcre2">^192\.168\.20\.10$</field>
+    <description>TFM/Flujos: flujo hacia buzon C2 FrostyGoop (plc_agua_2) desde origen no SCADA</description>
+    <group>mitre,c2,frostygoop,ipfix,</group>
+    <mitre>
+      <id>T0869</id>
+    </mitre>
+  </rule>
+
+</group>
+
+<!-- =====================================================================
+     (D) Allowlist MAC (par (ip, mac)).
+     Cadena self-contained (no toca 86601) basada en el decoder nuevo
+     tfm-mac-binding-campos aplicado al fichero all_macs.json producido
+     por pcap2macs.py. Mimetiza el patron de 100200-100210 (que ya se
+     evalua en runtime porque todo vive en etc/rules/local_rules.xml).
+     ===================================================================== -->
+<group name="tfm,ot_ics,">
+
+  <!-- Nota: Wazuh asigna decoder.name='json' a cualquier log con
+       <log_format>json</log_format> en ossec.conf; nuestros `<decoded_as>
+       tfm-mac-binding-campos` nunca engancharia. Chaineamos por campos
+       exclusivos de las entradas de pcap2macs: el par de keys
+       `ip_mac` + `mac` solo aparece aqui (ni flujos IPFIX ni Suricata
+       los llevan). -->
+  <rule id="100300" level="0">
+    <decoded_as>json</decoded_as>
+    <field name="ip_mac" type="pcre2">\S+</field>
+    <field name="mac" type="pcre2">[0-9a-f:]+</field>
+    <description>TFM/MAC: par (ip, mac) emitido por pcap2macs (base)</description>
+  </rule>
+
+  <!-- Si el par ip:mac NO esta en mac_ok -> rogue host / spoof MAC. -->
+  <rule id="100310" level="12">
+    <if_sid>100300</if_sid>
+    <list field="ip_mac" lookup="not_match_key">etc/lists/tfm/mac_ok</list>
+    <description>TFM/MAC: par (ip, mac) NO autorizado - $(ip) con $(mac) (tfm_src=$(tfm_src))</description>
+    <group>mitre,anomaly,mac_spoof,</group>
+    <mitre>
+      <id>T0859</id>
+      <id>T1557</id>
+    </mitre>
+  </rule>
+
+</group>
+
+<!-- =====================================================================
+     (E) Valor Modbus fuera de rango habitual (write anomalo).
+     Fuente: pcap2valores.py vuelca all_valores.json con campos:
+       plc_ip, fc, addr, value, banda, es_write, fuera_rango.
+     La comparacion value vs banda la hace el emisor (Wazuh no sabe
+     comparar numeros). Aqui solo filtramos por el flag booleano.
+     ===================================================================== -->
+<group name="tfm,ot_ics,">
+
+  <rule id="100400" level="0">
+    <decoded_as>json</decoded_as>
+    <field name="plc_ip" type="pcre2">\S+</field>
+    <field name="addr" type="pcre2">\S+</field>
+    <field name="fuera_rango" type="pcre2">\S+</field>
+    <description>TFM/Valores: operacion de escritura OT decodificada (base)</description>
+  </rule>
+
+  <!-- Dispara cuando el valor cae fuera de la banda aprendida. -->
+  <rule id="100410" level="12">
+    <if_sid>100400</if_sid>
+    <field name="fuera_rango" type="pcre2">^true$</field>
+    <description>TFM/Valores: $(protocol) write a $(plc_ip) reg $(addr) con valor $(value) FUERA del rango habitual $(banda)</description>
+    <group>mitre,anomaly,impact,</group>
+    <mitre>
+      <id>T0836</id>
+      <id>T0831</id>
+    </mitre>
+  </rule>
+
+  <!-- LIVE: correlacion con firmas Suricata 2001xxx generadas por
+       monitorizacion/kb/generar_reglas_valores.py. Las firmas disparan por
+       `value <min` / `value >max` sobre tráfico Modbus en vivo y el msg
+       empieza por "TFM/Valores: write". -->
+  <rule id="100411" level="12">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature">^TFM/Valores: write</field>
+    <description>TFM/Valores (live): $(alert.signature)</description>
+    <group>mitre,anomaly,impact,</group>
+    <mitre>
+      <id>T0836</id>
+      <id>T0831</id>
+    </mitre>
+  </rule>
+
+</group>
+
+<!-- =====================================================================
+     (C) Servidor OT desconocido (DPI de app-layer de Suricata).
+     Grupo separado y compartiendo "ids,suricata," con las reglas
+     oficiales 86600-86604 para que la cadena <if_sid>86600</if_sid>
+     resuelva el enganche en el arbol del engine (cross-file + grupo
+     compartido = child registrado correctamente).
+     Dispara cuando Suricata ha identificado un flujo como modbus / dnp3
+     / enip / s7 pero la IP destino NO esta en la lista plcs_ips (= PLCs
+     inventariados en entrenamiento). Patron: PLC pirata, servidor Modbus
+     fake levantado por el atacante, o PLC nuevo no autorizado.
+     ===================================================================== -->
+<group name="ids,suricata,tfm,ot_ics,">
+
+  <!-- 100270 cuelga de 86601 (Suricata: alert) por simetria con 100100-104.
+       Caveat conocido: en algunas versiones de Wazuh las hijas de 86601
+       definidas en etc/rules/ no se encadenan en el motor del analysisd
+       (herencia cross-file). Si pasa, el rule.id indexado sera 86601 y la
+       informacion de PLC pirata se puede recuperar en Kibana filtrando
+       data.app_proto in (modbus,s7,dnp3,enip) and data.dest_ip not in
+       (plcs_ips_inventario). Alternativa de respaldo: SIDs Suricata
+       2000170/171/172 (ver propuesta #4) ya detectan destinos inesperados
+       en los PUERTOS ESTANDAR 502/102/20000 — 100270 solo aporta cuando
+       el servidor pirata expone un puerto no estandar y Suricata lo
+       identifica por app-layer.
+       -->
+  <rule id="100270" level="12">
+    <if_sid>86601</if_sid>
+    <field name="app_proto" type="pcre2">^(modbus|dnp3|enip|s7)$</field>
+    <list field="dest_ip" lookup="not_match_key">etc/lists/tfm/plcs_ips</list>
+    <description>TFM Recon: servidor OT desconocido $(dest_ip) hablando $(app_proto)</description>
+    <group>mitre,anomaly,rogue_plc,</group>
+    <mitre>
+      <id>T0846</id>
+      <id>T0848</id>
+    </mitre>
+  </rule>
+
+</group>

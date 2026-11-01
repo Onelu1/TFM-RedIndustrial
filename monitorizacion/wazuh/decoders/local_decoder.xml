@@ -1,0 +1,46 @@
+<!--
+    local_decoder.xml - Decoders propios del TFM.
+
+    Wazuh ya trae decoders JSON y Suricata out-of-the-box; aqui solo añadimos
+    los que separan los flujos IPFIX de super_mediator (son JSON genericos y
+    conviene darles un nombre propio) y los logs del toolkit de ataques.
+
+    Convenciones de campos (coinciden con las claves que emite super_mediator):
+      sourceIPv4Address, destinationIPv4Address,
+      sourceTransportPort, destinationTransportPort,
+      protocolIdentifier, packetTotalCount, octetTotalCount,
+      flowStartMilliseconds, flowEndMilliseconds, silkAppLabel
+-->
+<decoder name="tfm-flujos-ipfix">
+    <prematch type="pcre2">"sourceIPv4Address"\s*:\s*"\d+\.\d+\.\d+\.\d+"</prematch>
+</decoder>
+
+<decoder name="tfm-flujos-ipfix-campos">
+    <parent>tfm-flujos-ipfix</parent>
+    <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>
+
+<!-- Toolkit de ataques: formato libre; capturamos timestamp + modulo + accion.
+     Los ficheros se llaman p.ej. 2026-10-13_18-24-01_c2_modbus_shell.log -->
+<decoder name="tfm-toolkit">
+    <prematch type="pcre2">^\d{4}-\d{2}-\d{2}[T _]\d{2}[:_-]\d{2}[:_-]\d{2}</prematch>
+</decoder>
+
+<decoder name="tfm-toolkit-accion">
+    <parent>tfm-toolkit</parent>
+    <regex offset="after_parent">(\w+)\.(\w+)</regex>
+    <order>modulo, accion</order>
+</decoder>
+
+<!-- Pares (ip, mac) emitidos por pcap2macs.py. Formato por linea:
+       {"timestamp": "<iso>", "tfm_src": "<rel>", "ip": "x", "mac": "y"}
+     Distinguir del flujo IPFIX por el campo "mac" (no aparece ahi).
+     Al consultar la lista CDB mac_ok se concatena la clave "ip:mac". -->
+<decoder name="tfm-mac-binding">
+    <prematch type="pcre2">"mac"\s*:\s*"[0-9a-f]{2}(?::[0-9a-f]{2}){5}"</prematch>
+</decoder>
+
+<decoder name="tfm-mac-binding-campos">
+    <parent>tfm-mac-binding</parent>
+    <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>

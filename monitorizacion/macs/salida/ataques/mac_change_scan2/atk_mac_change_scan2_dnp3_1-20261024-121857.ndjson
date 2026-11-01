@@ -1,0 +1,5 @@
+{"timestamp": "2026-10-24T10:18:59.073496+00:00", "tfm_src": "ataques/mac_change_scan2/atk_mac_change_scan2_dnp3_1-20261024-121857.pcap", "ip": "192.168.20.15", "mac": "6e:41:2d:bd:58:64", "ip_mac": "192.168.20.15|6e-41-2d-bd-58-64"}
+{"timestamp": "2026-10-24T10:18:59.073439+00:00", "tfm_src": "ataques/mac_change_scan2/atk_mac_change_scan2_dnp3_1-20261024-121857.pcap", "ip": "192.168.20.16", "mac": "ea:eb:3f:cd:36:8e", "ip_mac": "192.168.20.16|ea-eb-3f-cd-36-8e"}
+{"timestamp": "2026-10-24T10:19:10.723331+00:00", "tfm_src": "ataques/mac_change_scan2/atk_mac_change_scan2_dnp3_1-20261024-121857.pcap", "ip": "192.168.20.66", "mac": "de:ad:be:ef:ca:fe", "ip_mac": "192.168.20.66|de-ad-be-ef-ca-fe"}
+{"timestamp": "2026-10-24T10:18:58.576520+00:00", "tfm_src": "ataques/mac_change_scan2/atk_mac_change_scan2_dnp3_1-20261024-121857.pcap", "ip": "192.168.40.10", "mac": "8e:7e:dc:e6:35:d8", "ip_mac": "192.168.40.10|8e-7e-dc-e6-35-d8"}
+{"timestamp": "2026-10-24T10:18:59.028634+00:00", "tfm_src": "ataques/mac_change_scan2/atk_mac_change_scan2_dnp3_1-20261024-121857.pcap", "ip": "192.168.40.16", "mac": "0a:32:bc:f2:29:24", "ip_mac": "192.168.40.16|0a-32-bc-f2-29-24"}

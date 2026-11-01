@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
-"""Interfaz CLI del orquestador: menú principal y preguntas interactivas.
-
-:func:`main_menu` es el bucle que lee la opción `[0-7]` y delega en los demás
-módulos del paquete `scenario`. :func:`ask_kali_mode` es la única pregunta
-compartida con `switch_kali_mode` (de ahí vivir en este módulo propio).
-"""
+"""Menú interactivo [0-7] del orquestador y `ask_kali_mode`."""
 
 import sys
 
 from .deploy import clean_environment, deploy_scenario, switch_kali_mode
 from .nodered_flow import save_flows_file
+from .orquestador import (arrancar_todo, demo_deteccion_en_vivo,
+                          modo_entrenamiento, pipeline_completo, verificar)
 from .shell import run_cmd
 
 
@@ -43,10 +40,16 @@ def main_menu():
   [5] Limpiar Entorno (Detener contenedores)
   [6] Levantar dashboard de ataques (kali_nodo -> http://localhost:8888)
   [7] Cambiar modo kali_nodo (empresa <-> control) sin tocar los PLCs
+  --- Pipeline de monitorización ---
+  [8] Arrancar TODO (lab híbrido + router + Wazuh + Suricata-IDS)
+  [E] Modo entrenamiento (captura limpia + inferir KB dinámica)
+  [D] Demo detección en VIVO (ataque + alerta Wazuh en segundos)
+  [9] Pipeline completo (baseline opc. + 10 ataques + Suricata + Wazuh)
+  [A] Verificar estado del laboratorio (17 chequeos de salud)
   [0] Salir
 ======================================================================
         """)
-        opt = input("Selecciona una opción [0-7]: ").strip()
+        opt = input("Selecciona una opción [0-9, A, D, E]: ").strip().lower()
 
         if opt == "1":
             n_mb = int(input("Número de PLCs Modbus TCP: "))
@@ -92,6 +95,32 @@ def main_menu():
 
         elif opt == "7":
             switch_kali_mode()
+            input("\nPresiona ENTER para continuar...")
+
+        elif opt == "8":
+            arrancar_todo()
+            input("\nPresiona ENTER para continuar...")
+
+        elif opt == "9":
+            pipeline_completo()
+            input("\nPresiona ENTER para continuar...")
+
+        elif opt == "e":
+            seg_in = input("Duración de entrenamiento en segundos [1800]: ").strip()
+            try:
+                seg = int(seg_in) if seg_in else 1800
+            except ValueError:
+                print("[!] Duración no válida; usando 1800s.")
+                seg = 1800
+            modo_entrenamiento(seg)
+            input("\nPresiona ENTER para continuar...")
+
+        elif opt == "d":
+            demo_deteccion_en_vivo()
+            input("\nPresiona ENTER para continuar...")
+
+        elif opt == "a":
+            verificar()
             input("\nPresiona ENTER para continuar...")
 
         elif opt == "0":

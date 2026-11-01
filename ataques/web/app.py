@@ -1,18 +1,8 @@
 #!/usr/bin/env python3
-"""
-Dashboard Flask para el toolkit de ataques OT/ICS del TFM.
+"""Dashboard Flask del toolkit. Expone en el 8888 un panel con tarjetas por
+módulo y SSE para seguir en vivo el fichero de evidencia de cada acción.
 
-Se ejecuta DENTRO del contenedor `kali_nodo` (ver docker-compose generado por
-tfm_simulacion/main.py). Expone en el puerto 8888 un panel con tarjetas por
-módulo, selector de IP y streaming de salida (Server-Sent Events) con el
-contenido del fichero de evidencia en vivo.
-
-Arranque manual:
-    docker exec -d kali_nodo python3 /ataques/web/app.py
-
-El puerto 8888 se publica en el host desde el docker-compose, así que el panel
-queda accesible en http://localhost:8888 desde el navegador del equipo.
-"""
+Arranque: `docker exec -d kali_nodo python3 /ataques/web/app.py`."""
 
 import os
 import sys
@@ -30,10 +20,10 @@ if _BASE not in sys.path:
 from flask import Flask, Response, jsonify, render_template, request  # noqa: E402
 
 import config  # noqa: E402
-from core import runner  # noqa: E402
+from core import inventory, runner  # noqa: E402
 from modules import (  # noqa: E402
     recon, modbus_msf, s7_snap7, dnp3_pydnp3, samba_pivot, openplc_rce,
-    c2_modbus,
+    c2_modbus, mac_spoof,
 )
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
@@ -46,10 +36,8 @@ MODE = config.get_mode()
 JOBS = {}
 JOBS_LOCK = threading.Lock()
 
-# ---------------------------------------------------------------------------
-# Catálogo de acciones expuestas por el dashboard. Cada entrada describe una
-# llamada a los módulos del toolkit, con los parámetros que admite el panel.
-# ---------------------------------------------------------------------------
+# Catálogo de acciones del dashboard: cada entrada mapea action_id -> {título,
+# MITRE, parámetros por defecto, función}. El panel la renderiza como tarjeta.
 CATALOG = {
     "recon.modbus": {
         "titulo": "Modbus — Descubrir red (nmap)",
@@ -275,7 +263,6 @@ CATALOG = {
             p.get("prog_descr") or "PoC TFM upload_run", sink=sink),
     },
 
-    # --- C2 MODBUS (FrostyGoop) ---
     "c2_modbus.deploy": {
         "titulo": "C2 — Desplegar implante en host comprometido",
         "mitre": config.MITRE_MAP["c2_modbus.deploy_implant"],
@@ -321,6 +308,61 @@ CATALOG = {
         "fn": lambda p, sink: c2_modbus.c2_exit(
             p.get("mailbox"), int(p.get("port") or 502), sink=sink),
     },
+
+    # Capa 2 — ataques para disparar Wazuh 100310 (allowlist MAC)
+    "mac_spoof.mac_change": {
+        "titulo": "MAC — Cambiar MAC de kali y escanear Modbus",
+        "mitre": config.MITRE_MAP["mac_spoof.mac_change"],
+        "params": {"target": "192.168.10.0/24",
+                   "fake_mac": "de:ad:be:ef:ca:fe",
+                   "iface": "eth0"},
+        "fn": lambda p, sink: mac_spoof.mac_change_scan(
+            p.get("target") or "192.168.10.0/24",
+            p.get("fake_mac") or "de:ad:be:ef:ca:fe",
+            p.get("iface") or "eth0", sink=sink),
+    },
+    "mac_spoof.arp_spoof": {
+        "titulo": "MAC — ARP spoof (MITM): suplantar SCADA ante un PLC",
+        "mitre": config.MITRE_MAP["mac_spoof.arp_spoof"],
+        "params": {"target_ip": "192.168.10.10",
+                   "impersonate_ip": "192.168.20.10",
+                   "iface": "eth0", "count": 5},
+        "fn": lambda p, sink: mac_spoof.arp_spoof(
+            p.get("target_ip") or "192.168.10.10",
+            p.get("impersonate_ip") or "192.168.20.10",
+            p.get("iface") or "eth0",
+            int(p.get("count") or 5), sink=sink),
+    },
+
+    # Payload Modbus con valor FUERA del rango aprendido (Wazuh 100410).
+    # Reutiliza write_register del modulo modbus_msf cambiando el valor.
+    "modbus.write_outlier": {
+        "titulo": "Modbus — Escribir valor FUERA DE RANGO (anomalia payload)",
+        "mitre": config.MITRE_MAP["modbus.write_outlier"],
+        "params": {"target": config.MODBUS_DEFAULT_TARGET,
+                   "port": config.MODBUS_DEFAULT_PORT,
+                   "data_address": 0, "data": 50000, "unit_id": 1},
+        "fn": lambda p, sink: modbus_msf.write_register(
+            p.get("target") or config.MODBUS_DEFAULT_TARGET,
+            int(p.get("port") or 502),
+            int(p.get("data_address") or 0),
+            int(p.get("data") or 50000),
+            int(p.get("unit_id") or 1), sink=sink),
+    },
+
+    # Payload DNP3 Analog Output (G41V2) con valor fuera de banda.
+    "dnp3.write_analog_outlier": {
+        "titulo": "DNP3 — Escribir Analog Output FUERA DE RANGO (G41V2)",
+        "mitre": config.MITRE_MAP["dnp3.write_analog_outlier"],
+        "params": {"target": config.DNP3_DEFAULT_TARGET,
+                   "port": config.DNP3_DEFAULT_PORT,
+                   "index": 0, "value": 32000},
+        "fn": lambda p, sink: dnp3_pydnp3.write_analog(
+            p.get("target") or config.DNP3_DEFAULT_TARGET,
+            int(p.get("port") or 20000),
+            int(p.get("index") or 0),
+            int(p.get("value") or 32000), sink=sink),
+    },
 }
 
 # Agrupación por tarjetas (orden de aparición en el panel).
@@ -341,6 +383,10 @@ GROUPS = [
         "c2_modbus.deploy", "c2_modbus.shell",
         "c2_modbus.write_coil", "c2_modbus.write_register",
         "c2_modbus.exit"]),
+    ("Capa 2 — MAC spoof / ARP", [
+        "mac_spoof.mac_change", "mac_spoof.arp_spoof"]),
+    ("Payload — Valores anomalos", [
+        "modbus.write_outlier", "dnp3.write_analog_outlier"]),
 ]
 
 
@@ -411,6 +457,22 @@ def mode_info():
         "tunnel_up": runner.tunnel_up(),
         "ot_subnets": config.OT_SUBNETS,
     })
+
+
+@app.route("/api/network/topology")
+def network_topology():
+    """Topologia del escenario (nodos + aristas + subredes) para el mapa.
+
+    Fuente primaria: Docker API via /var/run/docker.sock montado en kali_nodo.
+    Fallback: parseo del compose. Ver core/inventory.py.
+    """
+    return jsonify(inventory.load_topology())
+
+
+@app.route("/api/network/status")
+def network_status():
+    """Estado 'up'/'down'/'unknown' de cada contenedor del escenario."""
+    return jsonify(inventory.probe_status())
 
 
 @app.route("/run/<action_id>", methods=["POST"])

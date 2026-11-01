@@ -1,0 +1,260 @@
+# ============================================================================
+# local.rules - Reglas Suricata para el laboratorio TFM (OT/ICS).
+#
+# Dos bloques:
+#   (1) Reglas de allowlist derivadas de la Base de Conocimiento.
+#       En OT el traafico es determinista: SCADA (192.168.20.10) habla con
+#       los PLCs en puertos 502/102/20000. Cualquier otra conversacion es
+#       sospechosa por si misma, sin mirar payload.
+#   (2) Firmas de ataques conocidos del toolkit (modulos de ataques/modules/).
+#       Mapeadas a MITRE ATT&CK for ICS usando los Txxxx de ataques/config.py.
+#
+# Rango de SIDs: 2000000-2099999 (local).
+# ============================================================================
+
+# ============================================================================
+# (1) ALLOWLIST OT - derivado del baseline
+# ============================================================================
+
+# 2000001  Conexion OT desde origen que NO es SCADA ni gateway DNP3.
+alert tcp [!$SCADA_SERVERS,!$DNP3_GATEWAYS] any -> $OT_PLCS 502 \
+    (msg:"conexion Modbus desde origen no autorizado"; \
+     flow:to_server,established; \
+     classtype:policy-violation; \
+     metadata:mitre_tactic_id TA0043, mitre_technique_id T0846, mitre_technique_id T0888; \
+     sid:2000001; rev:1;)
+
+alert tcp !$SCADA_SERVERS any -> $OT_PLCS 102 \
+    (msg:"conexion S7 desde origen no autorizado"; \
+     flow:to_server,established; \
+     classtype:policy-violation; \
+     metadata:mitre_technique_id T0846, mitre_technique_id T0888; \
+     sid:2000002; rev:1;)
+
+alert tcp !$DNP3_GATEWAYS any -> $OT_PLCS 20000 \
+    (msg:"conexion DNP3 desde origen no autorizado"; \
+     flow:to_server,established; \
+     classtype:policy-violation; \
+     metadata:mitre_technique_id T0846, mitre_technique_id T0888; \
+     sid:2000003; rev:1;)
+
+# 2000010-2000013  Escrituras Modbus (FC 5,6,15,16) desde origen NO SCADA.
+# El baseline NO contiene ninguna escritura; es decir, cualquier escritura es
+# anomala por definicion y mas aun si no la hace la SCADA.
+alert modbus !$SCADA_SERVERS any -> $OT_PLCS 502 \
+    (msg:"Modbus Write Single Coil (FC=5) desde origen no autorizado"; \
+     modbus: function 5; \
+     classtype:attempted-admin; \
+     metadata:mitre_technique_id T0855; \
+     sid:2000010; rev:1;)
+
+alert modbus !$SCADA_SERVERS any -> $OT_PLCS 502 \
+    (msg:"Modbus Write Single Register (FC=6) desde origen no autorizado"; \
+     modbus: function 6; \
+     classtype:attempted-admin; \
+     metadata:mitre_technique_id T0836; \
+     sid:2000011; rev:1;)
+
+alert modbus !$SCADA_SERVERS any -> $OT_PLCS 502 \
+    (msg:"Modbus Write Multiple Coils (FC=15) desde origen no autorizado"; \
+     modbus: function 15; \
+     classtype:attempted-admin; \
+     metadata:mitre_technique_id T0855; \
+     sid:2000012; rev:1;)
+
+alert modbus !$SCADA_SERVERS any -> $OT_PLCS 502 \
+    (msg:"Modbus Write Multiple Registers (FC=16) desde origen no autorizado"; \
+     modbus: function 16; \
+     classtype:attempted-admin; \
+     metadata:mitre_technique_id T0836; \
+     sid:2000013; rev:1;)
+
+# 2000020  Pivote IT->OT: cualquier conexion desde la red empresa hacia OT.
+alert ip $ENTERPRISE any -> $OT_PLCS any \
+    (msg:"pivote IT->OT desde red empresa"; \
+     classtype:policy-violation; \
+     metadata:mitre_tactic_id TA0008, mitre_technique_id T0866, mitre_technique_id T1046; \
+     sid:2000020; rev:1;)
+
+# 2000021  SCADA -> enterprise: no deberia haber (datos solo bajan via gateways,
+# si subieran algo seria exfiltracion).
+alert ip $OT_PLCS any -> $ENTERPRISE any \
+    (msg:"trafico anomalo OT->Enterprise (posible exfiltracion)"; \
+     classtype:policy-violation; \
+     metadata:mitre_technique_id T0882; \
+     sid:2000021; rev:1;)
+
+# 2000170-2000172  Protocolo OT con DESTINO fuera de su zona.
+# Las 2000001-003 miran origen no autorizado. Aqui miramos lo contrario:
+# un cliente abriendo (p.ej.) S7/102 contra una IP que NO es PLC S7, patron
+# tipico de "nmap -p 102 192.168.10.0/24" que explora la zona equivocada.
+# El threshold both 2/30s evita que un SYN perdido disparare (nmap de /24
+# dispara con holgura).
+alert tcp any any -> ![$MODBUS_PLCS,$C2_MAILBOX] 502 \
+    (msg:"TFM Recon: Modbus a destino inesperado (no es PLC Modbus)"; \
+     flow:to_server; \
+     threshold:type both, track by_src, count 2, seconds 30; \
+     classtype:attempted-recon; \
+     metadata:mitre_tactic_id TA0043, mitre_technique_id T0846, mitre_technique_id T0888; \
+     sid:2000170; rev:1;)
+
+alert tcp any any -> ![$S7_PLCS] 102 \
+    (msg:"TFM Recon: S7 a destino inesperado (no es PLC S7)"; \
+     flow:to_server; \
+     threshold:type both, track by_src, count 2, seconds 30; \
+     classtype:attempted-recon; \
+     metadata:mitre_tactic_id TA0043, mitre_technique_id T0846, mitre_technique_id T0888; \
+     sid:2000171; rev:1;)
+
+alert tcp any any -> ![$DNP3_PLCS] 20000 \
+    (msg:"TFM Recon: DNP3 a destino inesperado (no es outstation DNP3)"; \
+     flow:to_server; \
+     threshold:type both, track by_src, count 2, seconds 30; \
+     classtype:attempted-recon; \
+     metadata:mitre_tactic_id TA0043, mitre_technique_id T0846, mitre_technique_id T0888; \
+     sid:2000172; rev:1;)
+
+# ============================================================================
+# (2) FIRMAS DE ATAQUES DEL TOOLKIT
+# ============================================================================
+
+# -------- Recon (modules/recon.py) --------
+# 2000100  Patron nmap modbus-discover: cliente nuevo que empieza a leer slave
+# IDs secuenciales. El script envia FC=43 (Encapsulated Interface Transport,
+# Read Device Identification) y variaciones.
+alert modbus any any -> $OT_PLCS 502 \
+    (msg:"Modbus Read Device Identification (FC=43) - probable nmap modbus-discover"; \
+     modbus: function 43; \
+     classtype:attempted-recon; \
+     metadata:mitre_technique_id T0846, mitre_technique_id T0888; \
+     sid:2000100; rev:1;)
+
+# 2000101  Nmap s7-info: identificacion de dispositivo S7 (patron COTP + S7)
+# Nota: filtrar por `!$SCADA_SERVERS` es imprescindible porque el polling
+# legitimo S7Comm desde Node-RED tambien lleva el patron TPKT+COTP+S7.
+alert tcp !$SCADA_SERVERS any -> $OT_PLCS 102 \
+    (msg:"enumeracion S7 (COTP + S7 identification)"; \
+     flow:to_server,established; \
+     content:"|03 00|"; depth:2; content:"|32|"; distance:5; within:1; \
+     classtype:attempted-recon; \
+     metadata:mitre_technique_id T0846, mitre_technique_id T0888; \
+     sid:2000101; rev:2;)
+
+# -------- Modbus escritura dirigida (modules/modbus_msf.py) --------
+# Las SID 2000010-2000013 ya cubren FC=5/6/15/16 desde origen no SCADA. Las
+# siguientes son firmas mas especificas con el patron de uso del dashboard.
+# 2000110  Lectura/sondeo masivo de holding registers (recon pre-escritura).
+alert modbus !$SCADA_SERVERS any -> $OT_PLCS 502 \
+    (msg:"Modbus Read Holding Registers (FC=3) desde origen no SCADA"; \
+     modbus: function 3; \
+     classtype:attempted-recon; \
+     metadata:mitre_technique_id T0861, mitre_technique_id T0888; \
+     threshold:type threshold, track by_src, count 3, seconds 10; \
+     sid:2000110; rev:1;)
+
+# -------- S7 escritura (modules/s7_snap7.py) --------
+# 2000120  Setpoint/marcha S7 desde no SCADA. El protocolo S7 va cifrado en
+# COTP+S7comm; la deteccion aqui es por el hecho de que SCADA (20.10) es el
+# unico cliente legitimo del puerto 102.
+alert tcp !$SCADA_SERVERS any -> $OT_PLCS 102 \
+    (msg:"trafico S7 desde origen no SCADA (posible write_setpoint)"; \
+     flow:to_server,established; \
+     classtype:attempted-admin; \
+     metadata:mitre_technique_id T0836, mitre_technique_id T0855; \
+     sid:2000120; rev:1;)
+
+# -------- DNP3 (modules/dnp3_pydnp3.py, dnp3_raw.py) --------
+# 2000130  Operate / Direct Operate DNP3 (funciones 0x05, 0x06) desde no gateway.
+alert dnp3 !$DNP3_GATEWAYS any -> $OT_PLCS 20000 \
+    (msg:"DNP3 Operate/DirectOperate desde origen no autorizado"; \
+     dnp3_func:operate; \
+     classtype:attempted-admin; \
+     metadata:mitre_technique_id T0855, mitre_technique_id T0836; \
+     sid:2000130; rev:1;)
+
+alert dnp3 !$DNP3_GATEWAYS any -> $OT_PLCS 20000 \
+    (msg:"DNP3 DirectOperate (no response) desde origen no autorizado"; \
+     dnp3_func:direct_operate_nr; \
+     classtype:attempted-admin; \
+     metadata:mitre_technique_id T0855; \
+     sid:2000131; rev:1;)
+
+# -------- Samba pivote (modules/samba_pivot.py) --------
+# 2000140  Descarga anonima de la clave SSH desde srv_empresa (SMB).
+# El fichero clave es 'ssh_keys/id_rsa' en el share 'Backups_SCADA'.
+alert smb any any -> $ENTERPRISE any \
+    (msg:"acceso Samba a Backups_SCADA desde fuera (lectura clave SSH)"; \
+     smb.share;  content:"Backups_SCADA"; nocase; \
+     classtype:policy-violation; \
+     metadata:mitre_technique_id T1039, mitre_technique_id T1552.004; \
+     sid:2000140; rev:1;)
+
+# 2000141  Login SSH entrante a srv_empresa (2222/22) desde no-admin.
+alert tcp any any -> $ENTERPRISE 22 \
+    (msg:"SSH entrante a srv_empresa (posible apertura de tunel SOCKS)"; \
+     flow:to_server,established; \
+     classtype:policy-violation; \
+     metadata:mitre_technique_id T1078.003, mitre_technique_id T1090; \
+     sid:2000141; rev:1;)
+
+# -------- OpenPLC RCE (modules/openplc_rce.py) --------
+# 2000150  Login por defecto openplc/openplc en /login.
+alert http any any -> $OT_PLCS 8080 \
+    (msg:"intento de login al webserver"; \
+     flow:to_server,established; \
+     http.method; content:"POST"; \
+     http.uri; content:"/login"; \
+     classtype:attempted-admin; \
+     metadata:mitre_technique_id T0812; \
+     sid:2000150; rev:1;)
+
+# 2000151  Upload de .st (programa PLC).
+alert http any any -> $OT_PLCS 8080 \
+    (msg:"subida de programa .st (posible modificacion de logica)"; \
+     flow:to_server,established; \
+     http.method; content:"POST"; \
+     http.uri; content:"/programs"; \
+     classtype:attempted-admin; \
+     metadata:mitre_technique_id T0843, mitre_technique_id T0821, mitre_technique_id T0831; \
+     sid:2000151; rev:1;)
+
+# -------- C2 Modbus FrostyGoop (modules/c2_modbus.py) --------
+# Firma MUY distintiva: la operadora escribe comandos (FC=16) a holding regs
+# base 1000+ en plc_agua_2 (192.168.10.11) y lee respuestas (FC=3) en base
+# 1200+. Nadie legitimo toca esas direcciones (en la .st de plc_agua_2 solo
+# se usan los primeros ~20 registros).
+#
+# Palabra fija del protocolo: cada mensaje empieza con el magic 'FG' (0x4647)
+# en el primer registro, seguido de version/opcode/longitud. Esto permite una
+# deteccion por content match sobre payload Modbus incluso si cambia la ip.
+# Firma por direccion de registro usando el keyword nativo modbus de Suricata.
+# access write holding, address 1000 identifica write a holding register 1000.
+alert modbus any any -> $C2_MAILBOX 502 \
+    (msg:"Modbus Write a holding register >=1000 (canal encubierto)"; \
+     modbus: access write holding, address >1000; \
+     classtype:trojan-activity; \
+     metadata:mitre_tactic_id TA0011, mitre_technique_id T0869, mitre_technique_id T1570; \
+     sid:2000160; rev:3;)
+
+alert modbus any any -> $C2_MAILBOX 502 \
+    (msg:"Modbus Read holding register >=1200 (respuesta implante)"; \
+     modbus: access read holding, address >1200; \
+     classtype:trojan-activity; \
+     metadata:mitre_technique_id T0869; \
+     sid:2000161; rev:3;)
+
+# 2000162  Beaconing periodico del implante (poll cada 3s, flujo muy regular).
+alert tcp $ENTERPRISE any -> $C2_MAILBOX 502 \
+    (msg:"polling periodico desde srv_empresa -> plc_agua_2 (beaconing)"; \
+     flow:to_server,established; \
+     threshold:type both, track by_src, count 5, seconds 20; \
+     classtype:trojan-activity; \
+     metadata:mitre_technique_id T0869; \
+     sid:2000162; rev:1;)
+
+# =====================================================================
+# Reglas por valor fuera de banda (SIDs 2001000-2001999): se cargan
+# aparte via `-S valores_generado.rules` en el command de suricata_ids
+# (scenario/compose.py). Se generan desde valores_ok.json en cada [E]
+# (modo entrenamiento) con kb/generar_reglas_valores.py.
+# =====================================================================

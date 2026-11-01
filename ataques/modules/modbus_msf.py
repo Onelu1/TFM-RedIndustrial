@@ -1,19 +1,8 @@
 #!/usr/bin/env python3
-"""
-Ataques Modbus TCP vía Metasploit (módulos auxiliary/scanner/scada/*).
-Reproduce exactamente los módulos usados en las capturas del PDF del TFM:
+"""Ataques Modbus TCP vía Metasploit (auxiliary/scanner/scada/*).
 
-  - modbus_findunitid  -> enumera el unit/station ID         (T0888)
-  - modbusdetect       -> detecta servicio Modbus            (T0846/T0888)
-  - modbusclient       -> READ_COILS / READ_REGISTERS        (T0861)
-                          WRITE_COIL                         (T0855)
-                          WRITE_REGISTER                     (T0836)
-
-El toolkit genera un resource script (.rc) y lo ejecuta con:
-    msfconsole -q -r <script.rc>
-
-Pensado para correr dentro del contenedor `kali_nodo` con metasploit-framework
-instalado.
+Para cada acción se escribe un resource script `.rc` y se lanza con
+`msfconsole -q -r <script.rc>`.
 """
 
 import os

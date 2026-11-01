@@ -1,17 +1,5 @@
 #!/usr/bin/env python3
-"""
-Pivoting por Samba: descarga de clave SSH sin autenticar, túnel dinámico SOCKS
-y escaneo silencioso de la red OT a través del túnel. Reproduce la secuencia
-del PDF del TFM (ejecutar desde el contenedor kali_nodo).
-
-MITRE ATT&CK:
-  - T1039 Data from Network Shared Drive
-  - T1552.004 Unsecured Credentials: Private Keys
-  - T1078.003 Valid Accounts: Local Accounts
-  - T1090 Proxy (túnel dinámico SOCKS)
-  - T1046 Network Service Discovery
-  - T0886/T0812/T0866 (lateralización IT->OT)
-"""
+"""Pivoting por Samba: smbclient anónimo -> clave SSH -> túnel SOCKS -> nmap."""
 
 import os
 

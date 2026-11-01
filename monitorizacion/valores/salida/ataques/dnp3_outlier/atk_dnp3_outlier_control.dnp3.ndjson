@@ -1,0 +1,1 @@
+{"timestamp": "2026-10-24T14:27:31.818780+0000", "tfm_src": "ataques/dnp3_outlier/atk_dnp3_outlier_control", "src_ip": "192.168.20.66", "dst_ip": "192.168.40.10", "plc_ip": "192.168.40.10", "protocol": "dnp3", "fc": 5, "addr": "a0", "value": 32000, "banda": "0-95", "es_write": true, "fuera_rango": true}
